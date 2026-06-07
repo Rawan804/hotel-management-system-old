@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('staff', function (Blueprint $table) {
+
+            // ✨ نخلي dep_id يقبل null
+            $table->unsignedBigInteger('dep_id')->nullable()->change();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('staff', function (Blueprint $table) {
+
+            // ❗ نرجعه مثل ما كان (إذا بدك)
+            $table->unsignedBigInteger('dep_id')->nullable(false)->change();
+        });
+    }
+};
