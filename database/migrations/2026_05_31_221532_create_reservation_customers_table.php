@@ -10,17 +10,13 @@ return new class extends Migration
     {
         Schema::create('reservation_customers', function (Blueprint $table) {
             $table->id('res_cus_id');
-
-            $table->foreignId('customer_id')
-                ->constrained('customers', 'customer_id')
+          $table->foreignId('customer_id')
+                ->constrained('customers')
                 ->cascadeOnDelete();
-
-            $table->foreignId('res_id')
-                ->constrained('restaurants', 'res_id')
-                ->cascadeOnDelete();
+            $table->foreignId('res_id')->constrained('restaurants', 'res_id')->cascadeOnDelete();
 
             $table->integer('person_num');
-
+             $table->dateTime('reservation_time');
             $table->timestamps();
         });
     }

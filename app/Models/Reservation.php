@@ -12,10 +12,11 @@ class Reservation extends Model
     protected $primaryKey = 'resev_id';
 
     protected $fillable = [
-        'hall_id',
-        'customer_id',
-        'date',
-        'status'
+     'customer_id',
+    'hall_id',
+    'start_time',
+    'end_time',
+    'status',
     ];
 
     public function hall()

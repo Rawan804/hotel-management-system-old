@@ -1,53 +1,137 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRoomRequest;
 use App\Models\Room;
-use Illuminate\Http\Request;
+use App\Services\RoomService;
+use Illuminate\Support\Facades\Auth;
 
 class RoomController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private RoomService $service
+    ) {}
+
+    private function guardAdmin()
     {
-        $query = Room::query();
+        $creator = Auth::guard('staff')->user();
 
-        // 🔍 البحث بالنوع
-        if ($request->has('type')) {
-            $query->where('type', 'like', '%' . $request->type . '%');
+        if (!$creator) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // 👥 البحث بعدد الأشخاص
-        if ($request->has('person_num')) {
-            $query->where('person_num', '>=', $request->person_num);
+        if ($creator->role !== 'general_manager') {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // 📅 التحقق من التوفر بالتواريخ
-        if ($request->has(['startDate', 'endDate'])) {
-            $start = $request->startDate;
-            $end = $request->endDate;
+        return null;
+    }
 
-            $query->whereDoesntHave('bookings', function ($q) use ($start, $end) {
-                $q->where('status', 'confirmed')
-                  ->where(function ($q2) use ($start, $end) {
-                      $q2->whereBetween('startDate', [$start, $end])
-                         ->orWhereBetween('endDate', [$start, $end])
-                         ->orWhere(function ($q3) use ($start, $end) {
-                             $q3->where('startDate', '<=', $start)
-                                ->where('endDate', '>=', $end);
-                         });
-                  });
-            });
+    private function transformRoom($room)
+    {
+        return [
+            'id' => $room->id,
+            'room_number' => $room->room_number,
+            'status' => $room->status,
+
+            'category' => $room->category ? [
+                'name' => app()->getLocale() === 'ar'
+                    ? $room->category->name_ar
+                    : $room->category->name_en,
+
+                'price' => $room->category->price,
+                'capacity' => $room->category->capacity,
+
+                'room_type' => $room->category->roomType ? (
+                    app()->getLocale() === 'ar'
+                        ? $room->category->roomType->name_ar
+                        : $room->category->roomType->name_en
+                ) : null,
+
+            ] : null,
+        ];
+    }
+
+    public function index()
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
         }
+
+        $rooms = Room::with('category.roomType')->get();
 
         return response()->json([
-            'rooms' => $query->with('images')->get()
+            'message' => 'Rooms fetched successfully',
+            'data' => $rooms->map(fn($room) => $this->transformRoom($room))
         ]);
     }
 
-    public function show(Room $room)
+    public function availableRooms()
     {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
+
+        $rooms = Room::with('category.roomType')
+            ->where('status', 'available')
+            ->orderBy('room_number')
+            ->get();
+
         return response()->json([
-            'room' => $room->load('images')
+            'message' => 'Available rooms fetched successfully',
+            'data' => $rooms->map(fn($room) => $this->transformRoom($room))
         ]);
     }
+
+    public function occupiedRooms()
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
+
+        $rooms = Room::with('category.roomType')
+            ->where('status', 'occupied')
+            ->get();
+
+        return response()->json([
+            'message' => 'Occupied rooms fetched successfully',
+            'data' => $rooms->map(fn($room) => $this->transformRoom($room))
+        ]);
+    }
+
+    public function store(StoreRoomRequest $request)
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
+
+        $room = $this->service->create(
+            $request->validated()
+        );
+
+        return response()->json([
+            'message' => app()->getLocale() === 'ar'
+                ? 'تم إنشاء الغرفة بنجاح'
+                : 'Room created successfully',
+            'data' => $this->transformRoom($room->load('category.roomType'))
+        ], 201);
+    }
+    public function maintenanceRooms()
+{
+    if ($check = $this->guardAdmin()) {
+        return $check;
+    }
+
+    $rooms = Room::with('category.roomType')
+        ->where('status', 'maintenance')
+        ->orderBy('room_number')
+        ->get();
+
+    return response()->json([
+        'message' => 'Maintenance rooms fetched successfully',
+        'data' => $rooms->map(fn($room) => $this->transformRoom($room))
+    ]);
+}
 }

@@ -3,51 +3,31 @@
 namespace App\Services;
 
 use App\Models\Room;
-use App\Models\RoomImage;
 
 class RoomService
 {
-   public function getAll()
-{
-    return Room::with('images')
-        ->where('status', 'available')
-        ->get();
-}
-
-    public function getOne(Room $room)
+    public function create(array $data): Room
     {
-        return $room->load('images');
+        return Room::create([
+            'room_category_id' => $data['room_category_id'],
+            'room_number' => $data['room_number'],
+            'status' => $data['status'] ?? 'available'
+        ]);
     }
 
-    public function create(array $data)
+    public function update(Room $room, array $data): Room
     {
-        $room = Room::create([
-            'type' => $data['type'],
-            'price' => $data['price'],
-            'person_num' => $data['person_num'],
-            'status' => 'available'
+        $room->update([
+            'room_category_id' => $data['room_category_id'],
+            'room_number' => $data['room_number'],
+            'status' => $data['status']
         ]);
 
-        if (!empty($data['images'])) {
-            foreach ($data['images'] as $image) {
-
-                $path = $image->store(
-                    'rooms',
-                    'public'
-                );
-
-                RoomImage::create([
-                    'room_id' => $room->room_id,
-                    'image' => $path
-                ]);
-            }
-        }
-
-        return $room->load('images');
+        return $room;
     }
 
-    public function delete(Room $room)
+    public function delete(Room $room): bool
     {
-        $room->delete();
+        return $room->delete();
     }
 }

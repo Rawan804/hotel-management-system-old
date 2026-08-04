@@ -3,21 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RoomImage extends Model
 {
-    protected $primaryKey = 'image_id';
+    use HasFactory;
 
     protected $fillable = [
-        'room_id',
+        'room_category_id',
         'image'
     ];
 
-    public function room()
+    protected $hidden = [
+        'image',
+        'created_at',
+        'updated_at'
+    ];
+
+    protected $appends = [
+        'image_url'
+    ];
+
+    public function category()
     {
         return $this->belongsTo(
-            Room::class,
-            'room_id'
+            RoomCategory::class,
+            'room_category_id'
         );
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return asset('storage/' . $this->image);
     }
 }

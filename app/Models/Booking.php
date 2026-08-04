@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Booking extends Model
 {
     use HasFactory;
-
+//
     protected $primaryKey = 'book_id';
     public $incrementing = true;
     protected $keyType = 'int';
@@ -18,16 +18,16 @@ class Booking extends Model
         'customer_id',
         'startDate',
         'endDate',
-        'status'
+        'status',
     ];
 
     public function room()
     {
-        return $this->belongsTo(Room::class, 'room_id', 'room_id');
+        return $this->belongsTo(Room::class);
     }
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 }

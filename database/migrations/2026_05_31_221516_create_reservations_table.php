@@ -14,8 +14,10 @@ return new class extends Migration
       Schema::create('reservations', function (Blueprint $table) {
     $table->id('resev_id');
     $table->foreignId('hall_id')->constrained('halls','hall_id');
-    $table->foreignId('customer_id')->constrained('customers','customer_id');
-    $table->date('date');
+    $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
+  
+    $table->dateTime('start_time');
+    $table->dateTime('end_time');
     $table->enum('status',['pending','confirmed','canceled'])->default('pending');
     $table->timestamps();
 });
