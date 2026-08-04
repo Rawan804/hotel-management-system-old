@@ -2,111 +2,124 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Booking;
-use Illuminate\Http\Request;
-use App\Services\BookingService;
 use App\Http\Controllers\Controller;
+use App\Services\BookingService;
 use App\Http\Requests\StoreBookingRequest;
-
+use Illuminate\Http\Request;
+use App\Models\Customer;
+use Exception;
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    public function __construct(
+        private BookingService $service
+    ) {}
 
-    // إنشاء حجز جديد
+    // CREATE BOOKING
     public function store(StoreBookingRequest $request)
     {
         $user = $request->user();
-        if (!$user) return response()->json(['message' => 'Please login first'], 401);
 
-        $booking = $this->bookingService->create($request->validated(), $user);
+        $result = $this->service->create(
+            $request->validated(),
+            $user
+        );
 
-        if ($booking === null) return response()->json(['message' => 'Room not found'], 404);
-        if ($booking === false) return response()->json(['message' => 'Room is not available'], 400);
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 400);
+        }
 
         return response()->json([
-            'message' => 'Booking created successfully',
-            'booking' => $booking
+            'success' => true,
+            'message' => $result['message'],
+            'bookings' => $result['bookings']
         ], 201);
     }
 
-    // عرض حجوزات المستخدم
+    // MY BOOKINGS
     public function myBookings(Request $request)
     {
         $user = $request->user();
-        if (!$user) return response()->json(['message' => 'Please login first'], 401);
+
+        $bookings = $this->service->myBookings($user);
 
         return response()->json([
-            'message' => 'Bookings retrieved successfully',
-            'bookings' => $this->bookingService->myBookings($user)
+            'success' => true,
+            'message' => __('messages.bookings_retrieved'),
+            'bookings' => $bookings
         ]);
     }
 
-    // إلغاء الحجز
-    public function cancel(Request $request, Booking $booking)
+    // CANCEL BOOKING
+    public function cancel(Request $request, $bookingId)
     {
         $user = $request->user();
-        if (!$user) return response()->json(['message' => 'Please login first'], 401);
 
-        $result = $this->bookingService->cancel($booking, $user);
+        $booking = $user->bookings()
+            ->where('book_id', $bookingId)
+            ->first();
 
-        if (!$result) return response()->json(['message' => 'Not allowed or invalid booking'], 403);
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.booking_not_found')
+            ], 404);
+        }
 
-        return response()->json(['message' => 'Booking cancelled successfully']);
-    }
-    // إلغاء كل الحجوزات الخاصة بالمستخدم
-public function cancelAllBookings(Request $request)
-{
-    $user = $request->user();
-    if (!$user) return response()->json(['message' => 'Please login first'], 401);
+        $result = $this->service->cancel($booking, $user);
 
-    $result = $this->bookingService->cancelAll($user);
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.booking_cancel_failed')
+            ], 400);
+        }
 
-    if (!$result) return response()->json(['message' => 'No bookings to cancel'], 404);
-
-    return response()->json(['message' => 'All bookings cancelled successfully']);
-}
-
-// إلغاء الحجوزات بتاريخ محدد
-public function cancelBookingsByDate(Request $request)
-{
-    $user = $request->user();
-    if (!$user) return response()->json(['message' => 'Please login first'], 401);
-
-    $request->validate([
-        'date' => 'required|date'
-    ]);
-
-    $date = $request->date;
-
-    $result = $this->bookingService->cancelByDate($user, $date);
-
-    if (!$result) return response()->json(['message' => 'No bookings found on this date'], 404);
-
-    return response()->json(['message' => "Bookings on {$date} cancelled successfully"]);
-}
-public function cancelBookingsByPeriod(Request $request)
-{
-    $user = $request->user();
-
-    $request->validate([
-        'fromDate' => 'required|date',
-        'toDate'   => 'required|date|after_or_equal:fromDate',
-    ]);
-
-    $result = $this->bookingService->cancelByPeriod(
-        $user,
-        $request->fromDate,
-        $request->toDate
-    );
-
-    if (!$result) {
         return response()->json([
-            'message' => 'No bookings found in this period'
-        ], 404);
+            'success' => true,
+            'message' => __('messages.booking_cancelled')
+        ]);
     }
 
-    return response()->json([
-        'message' => 'Bookings cancelled successfully'
+
+    public function generalStats(Request $request)
+    {
+        $month = $request->input('month'); // اذا بدي احدد لا شهر معين 
+        $stats = $this->service->getGeneralRoomStats($month);
+
+        return response()->json($stats);
+    }
+    
+    
+    
+    public function getMonthlyStats(Request $request)
+{
+    $request->validate([
+        'year'  => 'nullable|integer|min:2020|max:2099',
+        'month' => 'nullable|integer|min:1|max:12',
     ]);
+
+    try {
+        $year = $request->input('year');
+        $month = $request->input('month');
+
+        $data = $this->service->getMonthlyOccupancyStats($year, $month);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Monthly room statistics retrieved successfully.',
+            'data'    => $data
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong!',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
 }
+
 }

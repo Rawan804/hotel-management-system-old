@@ -9,14 +9,24 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'room_id';
-
     protected $fillable = [
-        'type',
-        'price',
-        'person_num',
+        'room_category_id',
+        'room_number',
         'status'
     ];
+
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
+
+    public function category()
+    {
+        return $this->belongsTo(
+            RoomCategory::class,
+            'room_category_id'
+        );
+    }
 
     public function bookings()
     {
@@ -25,12 +35,4 @@ class Room extends Model
             'room_id'
         );
     }
-    public function images()
-{
-    return $this->hasMany(
-        RoomImage::class,
-        'room_id'
-    );
 }
-} 
-

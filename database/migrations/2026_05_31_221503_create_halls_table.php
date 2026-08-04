@@ -14,7 +14,10 @@ return new class extends Migration
      Schema::create('halls', function (Blueprint $table) {
     $table->id('hall_id');
     $table->string('image')->nullable();
-    $table->text('details')->nullable();
+    $table->text('details_ar')->nullable();
+    $table->text('details_en')->nullable();
+    $table->string('name_ar')->nullable();
+    $table->string('name_en')->nullable();
     $table->integer('capacity');
     $table->decimal('price',10,2);
     $table->timestamps();

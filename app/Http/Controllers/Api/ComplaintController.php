@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreComplaintRequest;
+use App\Http\Requests\ComplaintRequest;
 use App\Services\ComplaintService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+
 class ComplaintController extends Controller
 {
     protected ComplaintService $complaintService;
@@ -18,34 +19,82 @@ class ComplaintController extends Controller
         $this->complaintService = $complaintService;
     }
 
-    public function store(StoreComplaintRequest $request): JsonResponse
+    public function store(ComplaintRequest $request): JsonResponse
     {
         try {
 
-        $staffId = Auth::user()->staff_id;
+            $currentUser = Auth::user();
 
-         //  $staff = Staff::where('role', '!=', 'employee')->get();
-        //$staffId = auth('staff')->id();
-        //$staffId = auth()->id(); 
-
-            // استدعاء السيرفيس لإنشاء الشكوى
             $complaint = $this->complaintService->createComplaint(
-                $request->validated(), 
-                $staffId
+                $request->validated(),
+                $currentUser
             );
 
-            // إرجاع استجابة نجاح نجاح
             return response()->json([
                 'success' => true,
-                'message' => 'تم تقديم الشكوى بنجاح وبانتظار المراجعة.',
+                'message' => __('messages.created_successC'),
                 'data'    => $complaint
             ], 201);
 
         } catch (Exception $e) {
-        
+
+            $code = ($e->getCode() === 403) ? 403 : 500;
+
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ غير متوقع أثناء تقديم الشكوى، يرجى المحاولة لاحقاً.'
-            ], 500);
+                'message' => $e->getMessage()
+            ], $code);
         }
-    }}
+    }
+
+    public function updateStatus(ComplaintRequest $request, $id): JsonResponse
+    {
+        try {
+            $currentUser = Auth::user();
+
+            $complaint = $this->complaintService->updateStatus(
+                $id,
+                $request->validated()['status'],
+                $currentUser
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.updated_success'),
+                'data' => $complaint
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
+    }
+
+    public function getDepartmentComplaints(): JsonResponse
+    {
+        try {
+
+            $supervisor = Auth::user();
+
+            $complaints = $this->complaintService->getComplaintsForUser($supervisor);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.fetch_successC'),
+                'data' => $complaints
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            $code = ($e->getCode() >= 400 && $e->getCode() <= 500) ? $e->getCode() : 400;
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $code);
+        }
+    }
+}

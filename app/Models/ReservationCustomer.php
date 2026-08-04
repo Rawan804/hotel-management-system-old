@@ -14,8 +14,8 @@ class ReservationCustomer extends Model
     protected $fillable = [
         'customer_id',
         'res_id',
-        'person_num'
-    ];
+        'person_num',
+        'reservation_time'    ];
 
     public function customer()
     {

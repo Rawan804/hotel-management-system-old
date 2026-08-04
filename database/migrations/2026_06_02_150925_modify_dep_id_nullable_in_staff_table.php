@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('staff', function (Blueprint $table) {
 
-            // ✨ نخلي dep_id يقبل null
             $table->unsignedBigInteger('dep_id')->nullable()->change();
         });
     }

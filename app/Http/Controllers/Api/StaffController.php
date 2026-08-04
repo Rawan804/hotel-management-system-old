@@ -7,8 +7,11 @@ use App\Http\Requests\StoreStaffRequest;
 use App\Models\Staff;
 use App\Services\StaffService;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\UpdateStaffInfoRequest;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-
+use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\SaveFcmTokenRequest;
+use Exception;
 class StaffController extends Controller
 {
     public function __construct()
@@ -16,48 +19,79 @@ class StaffController extends Controller
         $this->middleware('auth:sanctum');
     }
 
-    // عرض الموظفين
-    public function index()
-    {
-        $user = Auth::user();
-if ($user->role === 'general_manager') {
-    $staff = Staff::where('role', '!=', 'general_manager')->get();
-}
-        elseif ($user->role === 'supervisor') {
-            $staff = Staff::where('dep_id', $user->dep_id)->where('role', '!=', 'supervisor')->get();
-        }
-        else {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+   // عرض الموظفين
+public function index()
+{
+    $user = Auth::user();
 
-        return response()->json($staff);
+    $selectedColumns = ['staff_id', 'dep_id', 'name', 'email', 'phone', 'role','image']; 
+   
+    if ($user->role === 'general_manager') {
+        $staff = Staff::select($selectedColumns)->where('is_active', true)
+            ->with(['department' => function($query) {
+                $query->select('dep_id', 'name');
+            }])
+            ->where('role', '!=', 'general_manager')
+            ->get();
+    }
+    elseif ($user->role === 'supervisor') {
+        $staff = Staff::select($selectedColumns)->where('is_active', true)
+            ->with(['department' => function($query) {
+                $query->select('dep_id', 'name');
+            }])
+            ->where('dep_id', $user->dep_id)
+            ->where('role', '!=', 'supervisor')
+            ->get();
+    }
+    else {
+        return response()->json(['message' => 'Forbidden'], 403);
     }
 
+    $customResponse = $staff->map(function($member) {
+        return [
+            'name'            => $member->name,
+            'email'           => $member->email,
+            'phone'           => $member->phone,
+            'role'            => $member->role,
+            'image' => $member->image,
+            'department_name' => $member->department ? $member->department->name : 'لا يوجد قسم' 
+        ];
+    });
+
+    return response()->json($customResponse);
+}
+
     // إنشاء موظف
- public function store(StoreStaffRequest $request, StaffService $service)
+public function store(StoreStaffRequest $request, StaffService $service)
 {
     $creator = Auth::user();
-
     if ($creator->role === 'employee') {
         return response()->json(['message' => 'Forbidden'], 403);
     }
 
     try {
-        // تمرير البيانات المفلترة والـ creator للخدمة
-        $result = $service->create($request->validated(), $creator);
+        $data = $request->validated();
 
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('staff_images', 'public');
+            $data['image'] = $imagePath; 
+        } else {
+            $data['image'] = null;
+        }
+
+        $result = $service->create($data, $creator);    
         return response()->json([
-            'message' => 'Staff created successfully',
+            'message' => __('messages.Staff created successfully'),
             'staff' => $result['staff']
         ], 201);
 
-    } catch (\Exception $e) {
-        // في حال فشل الشرط (وجود supervisor مفعّل أو عدم تحديد قسم)
+    } catch (Exception $e) {
         return response()->json([
             'message' => $e->getMessage()
-        ], $e->getCode() ?: 400);
+        ], is_int($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 400);
     }
 }
+
    // تفعيل / تعطيل
 public function toggleActive(Staff $staff)
 {
@@ -67,7 +101,7 @@ public function toggleActive(Staff $staff)
     }
 
     if ($user->staff_id === $staff->staff_id) {
-        return response()->json(['message' => 'لا يمكنك إلغاء تفعيل حسابك الشخصي.'], 400);
+        return response()->json(['message' => __('messages.you cant activiate')], 400);
     }
 
     if ($user->role === 'supervisor' && $staff->dep_id !== $user->dep_id) {
@@ -78,10 +112,95 @@ public function toggleActive(Staff $staff)
     $staff->save();
 
     return response()->json([
-        'message' => 'Updated successfully',
+        'message' =>__('messages.updated_success'),
         'staff' => $staff
     ]);
 }
 
-   
+//تعديل الرول 
+public function updateRole(StoreStaffRequest $request, Staff $staff, StaffService $service)
+{
+    $user = Auth::user();
+
+    if ($user->role !== 'general_manager') {
+        return response()->json(['message' => __('messages.unauthorized')], 403);
+    }
+
+    if ($staff->role === 'general_manager') {
+        return response()->json(['message' => __('messages.the general_manager ')], 400);
+    }
+
+    try {
+        
+    $data = $request->validated(); 
+        
+        $updatedStaff = $service->updateRole($staff, $data);
+
+        return response()->json([
+            'message' => __('messages.updated_role'),
+            'staff' => $updatedStaff
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], is_int($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 400);
+    }
+}
+
+
+// تابع تعديل المعلومات العادية
+public function updateInfo(UpdateStaffInfoRequest $request, Staff $staff, StaffService $service)
+{
+    $user = Auth::user();
+
+    if ($user->role === 'employee') {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+
+    try {
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            if ($staff->image) {
+                Storage::disk('public')->delete($staff->image);
+            }
+            $data['image'] = $request->file('image')->store('staff_images', 'public');
+        }
+        $updatedStaff = $service->updateInfo($staff, $data, $user);
+        return response()->json([
+            'message' => __('messages.update successfuly'),
+            'staff' => $updatedStaff
+        ], 200);
+   } catch (Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], is_int($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 400);
+    }
+}
+public function saveFirebaseToken(
+    SaveFcmTokenRequest $request,
+    StaffService $service
+)
+{
+    $staff = Auth::user();
+
+
+    $service->saveFirebaseToken(
+        $staff,
+        $request->validated()['fcm_token']
+    );
+
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => 'Firebase token saved successfully'
+
+    ]);
+}
+
+
+
 }

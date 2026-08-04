@@ -16,15 +16,11 @@ class StoreHotelNewsRequest extends FormRequest
         return [
             'title_ar' => 'required|string|max:255',
             'title_en' => 'required|string|max:255',
-
             'content_ar' => 'required|string',
             'content_en' => 'required|string',
-
-            'image' => 'nullable|image',
-
-            'is_pinned' => 'nullable|boolean',
-
-            'published_at' => 'nullable|date',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'is_pinned' => 'boolean',
+            'published_at' => 'nullable|date'
         ];
     }
 }

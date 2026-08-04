@@ -3,27 +3,30 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    use HasFactory;
-
-    protected $primaryKey = 'task_id';
-
     protected $fillable = [
         'staff_id',
-        'name',
-        'description',
+        'fixed_task_id',
         'status',
-        'date'
+
+        // 🔥 مهم
+        'weight'
     ];
+
+    public function fixedTask()
+    {
+        return $this->belongsTo(FixedTask::class, 'fixed_task_id', 'id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(TaskItemStatus::class, 'task_id', 'id');
+    }
 
     public function staff()
     {
-        return $this->belongsTo(
-            Staff::class,
-            'staff_id'
-        );
+        return $this->belongsTo(Staff::class, 'staff_id', 'staff_id');
     }
 }

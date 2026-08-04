@@ -14,15 +14,11 @@ class StoreRoomRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => 'required|string|max:255',
+            'room_category_id' => 'required|exists:room_categories,id',
 
-            'price' => 'required|numeric|min:0',
+            'room_number' => 'required|string|max:255|unique:rooms,room_number',
 
-            'person_num' => 'required|integer|min:1',
-
-            'images' => 'required|array',
-
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048'
+            'status' => 'nullable|in:available,occupied,maintenance'
         ];
     }
 }
