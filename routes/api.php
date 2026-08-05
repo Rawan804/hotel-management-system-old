@@ -329,4 +329,11 @@ Route::middleware('auth:sanctum')->group(function () {
         [ServiceController::class, 'toggleActive']
     );
 
+
+
+    Route::post(
+    '/staff/shifts',
+    [StaffController::class, 'addShift']
+);
+
 });
