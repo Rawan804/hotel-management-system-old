@@ -129,9 +129,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/news/{news}', [HotelNewsController::class, 'destroy']);
     Route::get('/pinned-news', [HotelNewsController::class, 'pinnedNews']);
 });
-
+Route::middleware(['auth:sanctum', 'customer'])->group(function () {
+    Route::post('/halls/reserve', [HallController::class, 'reserve']);
+    Route::get('/halls/reserve', [HallController::class, 'getHallReservation']);
+    // باقي الكود...
+});
 
 Route::middleware('auth:sanctum')->group(function () {
+    
     Route::put('/leaveRequest/{id}/status', [LeaveRequestsController::class, 'updateStatus']);
     Route::get('/leaveRequests', [LeaveRequestsController::class, 'getDepartmentLeaveRequests']);
    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
@@ -183,8 +188,7 @@ Route::middleware(['auth:sanctum', 'customer'])->group(function () {
     
     Route::delete('/restaurants/reservations/{id}', [RestaurantController::class, 'cancelReserve']);
 
-    Route::post('/halls/reserve', [HallController::class, 'reserve']);
-    Route::get('/halls/reserve', [HallController::class, 'getHallReservation']);
+  
     
     Route::patch('/halls/reservations/{id}/cancel', [HallController::class, 'cancelReserve']);
     Route::get('customer/my-bookings', [CustomerAuthController::class, 'myBookings']);
