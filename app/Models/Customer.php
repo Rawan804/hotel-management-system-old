@@ -10,32 +10,34 @@ class Customer extends Authenticatable
 {
     use HasApiTokens, HasFactory;
 
-    protected $primaryKey = 'customer_id';
-
     protected $fillable = [
         'name',
         'phone',
         'email',
-        'password'
+        'password',
     ];
 
     protected $hidden = [
-        'password'
+        'password',
     ];
 
     public function bookings()
     {
-        return $this->hasMany(
-            Booking::class,
-            'customer_id'
-        );
+        return $this->hasMany(Booking::class);
     }
 
     public function services()
     {
-        return $this->hasMany(
-            ServiceCustomer::class,
-            'customer_id'
-        );
+        return $this->hasMany(ServiceCustomer::class);
     }
-}
+
+     public function ReservationCustomer() {
+    return $this->hasMany(ReservationCustomer::class, 'customer_id');
+     }
+
+    public function  Reservation() {
+    return $this->hasMany( Reservation::class, 'customer_id');
+     }
+
+
+    }

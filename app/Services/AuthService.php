@@ -94,26 +94,39 @@ class AuthService
         return true;
     }
 
-    public function resetPassword(array $data)
-    {
-        $staff = Staff::where('email', $data['email'])->first();
+  public function resetPassword(array $data)
+{
+    $staff = Staff::where('email', $data['email'])->first();
 
-        if (!$staff) {
-            return null;
-        }
-
-        $staff->update([
-            'password' => Hash::make($data['password']),
-            'otp_code' => null,
-            'otp_expires_at' => null,
-        ]);
-
-        $staff->tokens()->delete();
-
-        Mail::to($staff->email)->send(new PasswordChangedMail());
-
-        return true;
+    if (!$staff) {
+        return null;
     }
+
+    if (
+        !$staff->otp_code ||
+        $staff->otp_code !== $data['otp'] ||
+        now()->gt($staff->otp_expires_at)
+    ) {
+        return false;
+    }
+
+    $staff->update([
+        'password' => Hash::make($data['password']),
+        'otp_code' => null,
+        'otp_expires_at' => null,
+    ]);
+
+    $staff->tokens()->delete();
+
+    $token = $staff->createToken('staff-token')->plainTextToken;
+
+    Mail::to($staff->email)->send(new PasswordChangedMail());
+
+    return [
+        'token' => $token,
+        'staff' => $staff
+    ];
+}
 
     public function getOtp(array $data)
     {
@@ -132,4 +145,13 @@ class AuthService
             'expires_at' => $staff->otp_expires_at
         ];
     }
+    public function logout($staff)
+{
+    if ($staff) {
+        // حذف التوكن الحالي المستخدم في طلب تسجيل الخروج
+        $staff->currentAccessToken()->delete();
+        return true;
+    }
+    return false;
+}
 }

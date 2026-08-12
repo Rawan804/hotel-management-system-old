@@ -8,15 +8,16 @@ class StoreBookingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // الحماية تتم عبر middleware
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'room_id' => 'required|exists:rooms,room_id',
+            'room_category_id' => 'required|exists:room_categories,id',
             'startDate' => 'required|date|after_or_equal:today',
             'endDate' => 'required|date|after:startDate',
+            'rooms_count' => 'nullable|integer|min:1'
         ];
     }
 }

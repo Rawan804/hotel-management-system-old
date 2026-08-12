@@ -14,10 +14,19 @@ class StoreServiceRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'booking_id'   => 'required|exists:bookings,book_id',
-            'dep_id'       => 'required|exists:departments,dep_id',
-            'service_type' => 'required|string',
-            'details'      => 'nullable|string',
+            'dep_id' => 'required|exists:departments,dep_id',
+
+            // اختيار خدمة (اختياري لأن في "غير ذلك")
+            'ser_id' => 'nullable|exists:services,ser_id',
+
+            // تفاصيل الطلب
+            'details' => 'nullable|string',
+
+            // مكان الطلب
+            'location' => 'nullable|string|max:255',
+
+            // مهم: إذا "غير ذلك" ممكن نحتاج label بسيط
+            'custom_title' => 'nullable|string|max:255',
         ];
     }
 }
