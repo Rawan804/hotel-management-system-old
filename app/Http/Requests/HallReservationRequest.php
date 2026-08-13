@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Requests;
-
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+
 
 
 class HallReservationRequest extends FormRequest
@@ -19,6 +19,7 @@ class HallReservationRequest extends FormRequest
     {
         return [
             'hall_id'        => 'required|exists:halls,hall_id',
+
             'date'           => 'required|date|after_or_equal:today',
             'start_hour'     => 'required|date_format:H:i',
             'duration_hours' => 'required|integer|min:1|max:24',
@@ -69,6 +70,5 @@ class HallReservationRequest extends FormRequest
             'duration_hours.required' => 'يجب تحديد مدة الحجز بالساعات.',
             'duration_hours.integer' => 'مدة الحجز يجب أن تكون رقماً صحيحاً.',
             'duration_hours.max' => 'أقصى مدة حجز مسموح بها هي 24 ساعة.',
-        ];
-    }
-}
+ ];
+        }    }

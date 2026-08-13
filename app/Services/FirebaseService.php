@@ -10,13 +10,23 @@ class FirebaseService
 
 private function getAccessToken()
 {
-    $credentials = new ServiceAccountCredentials(
 
-        "https://www.googleapis.com/auth/firebase.messaging",
+    // $credentials = new ServiceAccountCredentials(
 
-        config('firebase.credentials')
+    //     "https://www.googleapis.com/auth/firebase.messaging",
 
+    //     config('firebase.credentials')
+
+
+    $jsonCredentials = json_decode(
+        config('firebase.credentials'),
+        true
     );
+
+    $credentials = new ServiceAccountCredentials(
+        "https://www.googleapis.com/auth/firebase.messaging",
+        $jsonCredentials
+  );
 
     $token = $credentials->fetchAuthToken();
 

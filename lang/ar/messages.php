@@ -25,7 +25,7 @@ return [
     'room_created' => 'تم إنشاء الغرفة بنجاح',
     'room_updated' => 'تم تعديل الغرفة بنجاح',
     'room_deleted' => 'تم حذف الغرفة بنجاح',
-     'booking_created' => 'تم إنشاء الحجز بنجاح',
+    
 
     'booking_cancelled' => 'تم إلغاء الحجز بنجاح',
 
@@ -42,13 +42,10 @@ return [
 
     'booking_created' => 'تم إنشاء الحجز بنجاح',
 
-    'booking_cancelled' => 'تم إلغاء الحجز بنجاح',
 
     'booking_cancel_failed' => 'لا يمكن إلغاء هذا الحجز',
 
     'booking_not_found' => 'الحجز غير موجود',
-
-    'bookings_retrieved' => 'تم جلب الحجوزات بنجاح',
 
     'not_enough_rooms' => 'لا يوجد عدد كافٍ من الغرف المتاحة ضمن هذا التصنيف',
     'no_available_staff' => 'لا يوجد موظفين متاحين في هذا القسم',
@@ -74,9 +71,8 @@ return [
 
     'service_types_retrieved' => 'تم جلب أنواع الخدمات بنجاح',
 
-    'service_type_created_successfully' => 'تم إنشاء نوع الخدمة بنجاح',
      'created_success' => 'تم تقديم الشكوى بنجاح وبانتظار المراجعة.',
-    'updated_success' => 'تم تحديث الحالة بنجاح.',
+  
     //'fetch_success' => 'تم جلب الشكاوى بنجاح.',
      'fetch_success' => 'تم جلب القاعات بنجاح.',
     'reserved_success' => 'تمت عملية الحجز بنجاح.',
@@ -86,11 +82,10 @@ return [
     'cancel_failed' => 'عذراً، لم يتم العثور على الحجز أو لا تملك صلاحية إلغائه.',
      'created_success' => 'تم تقديم الإجازة بنجاح وبانتظار المراجعة.',
     'created_error'   => 'حدث خطأ غير متوقع أثناء تقديم الإجازة، يرجى المحاولة لاحقاً.',
-    'updated_success' => 'تم تحديث الحالة بنجاح.',
     'fetch_success'   => 'تم جلب إجازات القسم بنجاح.',
       'fetch_success' => 'تم جلب المطاعم بنجاح.',
-    'reserved_success' => 'تمت عملية الحجز بنجاح.',
-    'reservations_fetch_success' => 'تم جلب الحجوزات بنجاح.',
+   
+      'reservations_fetch_success' => 'تم جلب الحجوزات بنجاح.',
     'restaurant_reservations_fetch_success' => 'تم جلب حجوزات المطعم بنجاح.',
     'cancel_success' => 'تم إلغاء الحجز بنجاح.',
     'cancel_failed' => 'عذراً، لم يتم العثور على الحجز أو أنك لا تملك صلاحية إلغائه.',
@@ -118,14 +113,12 @@ return [
    'halls_cancel_failed'=>'فشل الالغاء',
     'halls_cancel_success'=>'تم الالغاء بنجاح',
    'created_successfully'=>'تم الاضافة بنجاح',
-    'updated_success' => 'تم تحديث الحالة بنجاح.',
     'fetch_successL'   => 'تم جلب إجازات  بنجاح.', 
     'fetch_successC' => 'تم جلب الشكاوى بنجاح.',
     'service_type_created_successfully' => 'تم إنشاء نوع الخدمة بنجاح',
      'created_successC' => 'تم تقديم الشكوى بنجاح وبانتظار المراجعة.',
     'updated_success' => 'تم تحديث الحالة بنجاح.',
     
-   'updated_role'=>'تم تحديث صلاحية الموظف بنجاح  ',
    'updated_role'=>'تم تحديث صلاحية الموظف بنجاح  ',
   'The section must be specified when creating a supervisor' => 'يجب تحديد القسم عند إنشاء مسؤول',
    
@@ -140,5 +133,5 @@ return [
 
     'Your leave request has been approved'=>'تم قبول طلب الاجازة',
    'Your leave request has been rejected'=>'تم رفض طلب الاجازة',
-
-];
+   
+   ];

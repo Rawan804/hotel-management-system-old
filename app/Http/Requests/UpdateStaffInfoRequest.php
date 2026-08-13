@@ -20,8 +20,10 @@ class UpdateStaffInfoRequest extends FormRequest
             'dep_id'   => 'nullable|exists:departments,dep_id',
             'name'     => 'nullable|string|max:255',
             'phone'    => 'nullable|string',
+
             'email'    => 'nullable|email|unique:staff,email,' . $staffId . ',staff_id',
             'password' => 'nullable|min:6', 
+
             'image'    => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
         ];
     }

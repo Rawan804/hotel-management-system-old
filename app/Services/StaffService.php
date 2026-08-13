@@ -6,6 +6,7 @@ use App\Models\Staff;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Facades\Storage;
 class StaffService
 {
 //اضافة موظف
@@ -65,6 +66,7 @@ public function create(array $data, Staff $creator): array
                     __('messages.already has an active service manager'),
                     422
                 );
+
             }
         }
 
@@ -80,12 +82,16 @@ public function create(array $data, Staff $creator): array
             'status' => $data['status'],
             'max_load' => $data['max_load'],
             'service_load' => $data['service_load'],
-        ]);
 
+        ]);
+  
         return [
             'staff' => $staff,
         ];
+
+    
     }
+
 
  //تعديل الرول
     public function updateRole(
@@ -176,7 +182,6 @@ public function create(array $data, Staff $creator): array
     string $token
     ): bool
      {
-
     $staff->update([
 
         'fcm_token' => $token

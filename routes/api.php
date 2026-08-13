@@ -132,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'customer'])->group(function () {
     Route::post('/halls/reserve', [HallController::class, 'reserve']);
     Route::get('/halls/reserve', [HallController::class, 'getHallReservation']);
+
     Route::post('/restaurants/reserve', [RestaurantController::class, 'reserve']);
     Route::get('/restaurants/reserve', [RestaurantController::class, 'getRestaurantReservation']);
       
@@ -184,7 +185,6 @@ Route::middleware(['auth:sanctum', 'customer'])->group(function () {
 
     Route::post('/service-requests', [ServiceRequestController::class, 'store']);
     Route::get('/service-requests/my', [ServiceRequestController::class, 'customerRequests']);
-
     Route::delete('/restaurants/reservations/{id}', [RestaurantController::class, 'cancelReserve']);
 
   

@@ -8,10 +8,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStaffRequest extends FormRequest
 {
+
     public function authorize(): bool
+
     {
         return true;
     }
+
 
     public function rules(): array
     {
@@ -46,6 +49,7 @@ class StoreStaffRequest extends FormRequest
             'service_load' => ['required','integer','min:0'],
 
             'max_load' => ['required','integer','min:0'],
+
         ];
     }
 }

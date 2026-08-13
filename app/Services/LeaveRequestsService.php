@@ -120,6 +120,7 @@ class LeaveRequestsService
             $message =
                __('messages.Your leave request has been rejected.') ;
 
+
         }
 
         $this->notificationService->sendToStaff(

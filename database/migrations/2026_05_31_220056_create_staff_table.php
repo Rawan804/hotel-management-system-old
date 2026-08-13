@@ -12,7 +12,9 @@ return new class extends Migration
 
     $table->id('staff_id');
 
+
     $table->foreignId('dep_id')->nullable()
+
         ->constrained('departments','dep_id')
         ->cascadeOnDelete();
 
@@ -47,6 +49,7 @@ return new class extends Migration
    $table->text('fcm_token')->nullable();
     $table->timestamps();
 });    }
+
 
     public function down(): void
     {

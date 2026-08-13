@@ -30,19 +30,16 @@ class EventService
         return Event::create($data);
     }
 
-   public function delete(Event $event)
-{
-    if ($event->image) {
-        Storage::disk('public')->delete($event->image);
-    }
 
+public function delete(Event $event)
+{
+   
     $event->update([
         'is_active' => false
     ]);
 
     return $event->fresh();
 }
-
     public function update(Event $event, array $data)
 {
     // إذا في صورة جديدة
@@ -59,6 +56,7 @@ class EventService
         // لا تغيّر الصورة القديمة إذا ما انبعتت صورة جديدة
         unset($data['image']);
     }
+
 
     // تحديث البيانات
     $event->update($data);

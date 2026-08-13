@@ -13,14 +13,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
 class StaffController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth:sanctum');
     }
-//عرض الموظفين 
+
+    //عرض الموظفين 
 
     public function index(): JsonResponse
     {
@@ -94,7 +94,6 @@ class StaffController extends Controller
 
         return response()->json($customResponse);
     }
-
     //| إنشاء موظف 
 
     public function store(
@@ -176,9 +175,8 @@ class StaffController extends Controller
 
         $staff->is_active = !$staff->is_active;
         $staff->save();
-
         return response()->json([
-            'message' => __('messages.updated_success'),
+           'message' => __('messages.updated_success'),
             'staff' => $staff,
         ]);
     }
@@ -291,6 +289,7 @@ public function saveFirebaseToken(
     SaveFcmTokenRequest $request,
     StaffService $service
 )
+
 {
     $staff = Auth::user();
 
@@ -306,10 +305,103 @@ public function saveFirebaseToken(
         'success' => true,
 
         'message' => 'Firebase token saved successfully'
-
     ]);
 }
 
 
 
-}
+
+
+
+// إضافة شيفت لموظف
+public function addShift(Request $request)
+{
+    $user = Auth::user();
+
+
+    // الصلاحيات
+    if (!in_array($user->role, [
+        'general_manager',
+        'supervisor',
+        'service_manager'
+    ])) {
+
+        return response()->json([
+            'message' => app()->getLocale() === 'ar'
+                ? 'غير مسموح'
+                : 'Forbidden'
+        ], 403);
+
+    }
+
+
+
+    // البيانات المطلوبة
+    $request->validate([
+
+        'staff_id' => 'required|exists:staff,staff_id',
+
+        'shift_date' => 'required|date',
+
+        'start_time' => 'required',
+
+        'end_time' => 'required',
+
+    ]);
+
+
+
+    // الموظف الذي نضيف له الشيفت
+    $staff = Staff::findOrFail(
+        $request->staff_id
+    );
+
+
+
+    // المدير العام يقدر على كل الأقسام
+    // الباقي فقط ضمن قسمه
+    if (
+        $user->role !== 'general_manager'
+        &&
+        $staff->dep_id != $user->dep_id
+    ) {
+
+        return response()->json([
+            'message' => app()->getLocale() === 'ar'
+                ? 'يمكنك إضافة الشيفتات لموظفي قسمك فقط'
+                : 'You can only add shifts for your department'
+        ],403);
+
+    }
+
+
+
+    // إنشاء الشيفت
+    $shift = StaffShift::create([
+
+        'staff_id' => $staff->staff_id,
+
+        'shift_date' => $request->shift_date,
+
+        'start_time' => $request->start_time,
+
+        'end_time' => $request->end_time,
+
+        'is_active' => true
+
+    ]);
+
+
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => app()->getLocale() === 'ar'
+            ? 'تمت إضافة الشيفت بنجاح'
+            : 'Shift added successfully',
+
+        'data' => $shift
+
+    ], 201);
+}}
