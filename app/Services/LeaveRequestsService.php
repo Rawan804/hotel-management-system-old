@@ -29,11 +29,7 @@ class LeaveRequestsService
         ]);
     }
 
-    public function updateStatus(
-        int $leaveRequestId,
-        string $status,
-        $currentUser
-    )
+    public function updateStatus(  int $leaveRequestId, string $status, $currentUser )
     {
 
         $leaveRequest = LeaveRequest::where(
@@ -53,7 +49,7 @@ class LeaveRequestsService
         }
 
         if ($currentUser->role === 'general_manager') {
-            if ($employee->role !== 'supervisor') {
+            if(!in_array($employee->role, ['supervisor', 'service_manager'])){
 
                 throw new \Exception(
                     __('messages.gm_only_approves_supervisors_leaves'),
@@ -61,7 +57,6 @@ class LeaveRequestsService
                 );
 
             }
-
 
          $leaveRequest->update([
             'status' => $status
@@ -98,6 +93,29 @@ class LeaveRequestsService
             );
             return $leaveRequest;
 
+        } if ($currentUser->role === 'service_manager'){
+            if ($employee->role !== 'employee') {
+                throw new \Exception(
+                    __('messages.unauthorized_leave_edit'),
+                    403
+                );
+            }
+
+            if ((int)$currentUser->dep_id !==(int)$employee->dep_id) {
+
+                throw new \Exception(
+                    __('messages.unauthorized_different_department_leave'),
+                    403
+                );}
+            $leaveRequest->update([
+                'status' => $status
+
+            ]);
+            $this->sendLeaveNotification(
+                $employee,
+                $status
+            );
+            return $leaveRequest;
         }
         throw new \Exception(
             __('messages.unauthorized_status_update'),
@@ -139,10 +157,7 @@ class LeaveRequestsService
             return LeaveRequest::whereHas(
                 'staff',
                 function ($query) {
-                    $query->where(
-                        'role',
-                        'supervisor'
-                    );})->get();}
+                   $query->whereIn('role', ['service_manager', 'supervisor']);})->get();}
 
         // المشرف يرى موظفي قسمه
         if ($currentUser->role === 'supervisor') {
@@ -155,8 +170,16 @@ class LeaveRequestsService
                     )
                     ->where( 'role','employee'
                     ); }   )->get();
-
-
+        }
+          if ($currentUser->role === 'service_manager'){
+            return LeaveRequest::whereHas( 'staff',
+                function ($query) use ($currentUser) {
+                    $query->where(
+                        'dep_id',
+                        $currentUser->dep_id
+                    )
+                    ->where( 'role','employee'
+                    ); }   )->get();
         }
         throw new \Exception(
             __('messages.unauthorized_view_data'),
@@ -164,6 +187,7 @@ class LeaveRequestsService
         );
 
     }
+
 
 
 }
