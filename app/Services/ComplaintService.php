@@ -22,20 +22,33 @@ class ComplaintService
     }
 
     public function updateStatus(int $complaintId, string $status, $currentUser)
-    {
-        $complaint = Complaint::where('com_id', $complaintId)->firstOrFail();
-        $employee = $complaint->staff()->first();
-        
-        if ($currentUser->role === 'general_manager') {
-            if ($employee->role !== 'supervisor') {
-                throw new \Exception(__('messages.gm_only_approves_supervisors'), 403);
+  {
+    $complaint = Complaint::where('com_id', $complaintId)->firstOrFail();
+    $employee = $complaint->staff()->first();
+
+    if ($currentUser->role === 'general_manager') {
+        if (!in_array($employee->role, ['supervisor', 'service_manager'])) {
+            throw new Exception(__('messages.gm_only_approves_supervisors_and_service_managers'), 403);
+        }
+
+        $complaint->update(['status' => $status]);
+        return $complaint;
+    }
+
+        if ($currentUser->role === 'supervisor'){
+            if ($employee->role !== 'employee') {
+                throw new \Exception(__('messages.unauthorized_complaint_edit'), 403);
             }
-            
+
+            if ((int)$currentUser->dep_id !== (int)$employee->dep_id) {
+                throw new \Exception(__('messages.unauthorized_different_department'), 403);
+            }
+
             $complaint->update(['status' => $status]);
             return $complaint;
         }
-
-        if ($currentUser->role === 'supervisor') {
+        
+        if ($currentUser->role === 'service_manager'){
             if ($employee->role !== 'employee') {
                 throw new \Exception(__('messages.unauthorized_complaint_edit'), 403);
             }
@@ -55,11 +68,18 @@ class ComplaintService
     {
         if ($user->role === 'general_manager') {
             return Complaint::whereHas('staff', function ($query) {
-                $query->where('role', 'supervisor');
+                $query->whereIn('role', ['service_manager', 'supervisor']);
             })->get();
         }
 
         if ($user->role === 'supervisor') {
+            return Complaint::whereHas('staff', function ($query) use ($user) {
+                $query->where('dep_id', $user->dep_id)
+                      ->where('role', 'employee');
+            })->get();
+        }
+
+        if ($user->role === 'service_manager'){
             return Complaint::whereHas('staff', function ($query) use ($user) {
                 $query->where('dep_id', $user->dep_id)
                       ->where('role', 'employee');
