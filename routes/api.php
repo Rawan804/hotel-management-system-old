@@ -139,7 +139,13 @@ Route::middleware(['auth:sanctum', 'customer'])->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    
+     Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::post('/departments', [DepartmentController::class, 'store']);
+    // راوتات التعديل والحذف
+    Route::put('/departments/{department}', [DepartmentController::class, 'update']);
+    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);   
+
+
     Route::put('/leaveRequest/{id}/status', [LeaveRequestsController::class, 'updateStatus']);
     Route::get('/leaveRequests', [LeaveRequestsController::class, 'getDepartmentLeaveRequests']);
    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
