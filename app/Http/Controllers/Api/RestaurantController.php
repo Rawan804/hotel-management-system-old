@@ -64,7 +64,7 @@ class RestaurantController extends Controller
         // تعديل: دمج مجلد restaurants مع الاسم إذا لم يكن رابطاً خارجياً جاهزاً
         $imageUrl = Str::startsWith($imagePath, ['http://', 'https://']) 
             ? $imagePath 
-            : url('restaurants/' . $imagePath);
+            : url('storage/restaurants/' . $imagePath);
 
         return [
             'res_id'      => $restaurant->res_id,

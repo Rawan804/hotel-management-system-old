@@ -16,7 +16,7 @@ public function createRestaurant(array $data): Restaurant
             $imageName = time() . '.' . $image->getClientOriginalExtension();
             
         
-            $image->move(public_path('restaurants'), $imageName);
+           $image->move(public_path('restaurants'), $imageName);
             
             // حفظ الاسم فقط في قاعدة البيانات
             $data['image'] = $imageName; 
@@ -36,9 +36,9 @@ public function createRestaurant(array $data): Restaurant
 
         if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
             // تصحيح: فحص وحذف الصورة القديمة من مجلد restaurants
-            if ($restaurant->image && File::exists(public_path('restaurants/' . $restaurant->image))) {
-                File::delete(public_path('restaurants/' . $restaurant->image));
-            }
+           if ($restaurant->image) {
+    \Illuminate\Support\Facades\Storage::disk('public')->delete('restaurants/' . $restaurant->image);
+}
 
             $image = $data['image'];
             $imageName = time() . '.' . $image->getClientOriginalExtension();

@@ -62,7 +62,7 @@ class HallController extends Controller
     
     $imageUrl = \Illuminate\Support\Str::startsWith($imagePath, ['http://', 'https://']) 
         ? $imagePath 
-        : url('halls/' . $imagePath);
+       : url('storage/halls/' . $imagePath);
 
     return [
         'hall_id'     => $hall->hall_id,
