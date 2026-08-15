@@ -30,6 +30,7 @@ class EventService
         return Event::create($data);
     }
 
+
 public function delete(Event $event)
 {
    
@@ -55,6 +56,7 @@ public function delete(Event $event)
         // لا تغيّر الصورة القديمة إذا ما انبعتت صورة جديدة
         unset($data['image']);
     }
+
 
     // تحديث البيانات
     $event->update($data);

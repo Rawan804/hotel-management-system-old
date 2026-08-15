@@ -5,8 +5,10 @@ use App\Models\Hall;
 use App\Models\Reservation;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+
 use Illuminate\Support\Facades\DB;
 use Exception;
+
 
 class HallService
 {
@@ -58,25 +60,28 @@ public function updateHall(int $hallId, array $data): Hall
         $locale = request()->header('Accept-Language', 'ar'); 
         $halls = Hall::select(['hall_id', 'name_en', 'name_ar', 'image', 'details_en', 'details_ar', 'price', 'capacity'])->get();
 
-        return $halls->map(function ($hall) use ($locale) {
-            return [
-                'res_id'   => $hall->hall_id,
-                'image'    => $hall->image,
-                'name'     => $locale === 'en' ? $hall->name_en : $hall->name_ar,
-                'details'  => $locale === 'en' ? $hall->details_en : $hall->details_ar,
-                'price'    => $hall->price,
-                'capacity' => $hall->capacity,
-            ];
-        }); 
+    return $halls->map(function ($hall) use ($locale) {
+    $imagePath = $hall->image;
+    
+    $imageUrl = \Illuminate\Support\Str::startsWith($imagePath, ['http://', 'https://']) 
+        ? $imagePath 
+        : url('halls/' . $imagePath);
+
+    return [
+        'hall_id'   => $hall->hall_id,
+        'image'     => $imageUrl,
+        'name'      => $locale === 'en' ? $hall->name_en : $hall->name_ar,
+        'details'   => $locale === 'en' ? $hall->details_en : $hall->details_ar,
+        'price'     => $hall->price,
+        'capacity'  => $hall->capacity,
+    ];
+}); 
     }
 
-    /**
-     * إنشاء حجز جديد مع التحقق من عدم تعارض الأوقات
-     */
     public function createReservation(int $customerId, array $data): Reservation
     {
-        $startTime = Carbon::parse($data['date'] . ' ' . $data['start_hour']);
-       
+    
+    $startTime = Carbon::parse($data['date'] . ' ' . $data['start_hour']);
         $endTime = (clone $startTime)->addHours((int) $data['duration_hours']);
 
         $exists = Reservation::where('hall_id', $data['hall_id'])
@@ -106,7 +111,9 @@ public function updateHall(int $hallId, array $data): Hall
         return Reservation::get();
     }
 
+
     // عرض حجوزات قاعة معينة
+
     public function getAllReservation($hallId): Collection
     {
         $reservations = Reservation::with('customer')
@@ -125,7 +132,8 @@ public function updateHall(int $hallId, array $data): Hall
         });
     }
 
- // 3. احصائيات الشهرية لقاعة محددة 
+    // 3. احصائيات الشهرية لقاعة محددة 
+
     public function countMonthlyReservationsByHall(int $hallId)
     {
         return Reservation::select(
@@ -149,11 +157,13 @@ public function updateHall(int $hallId, array $data): Hall
         if (!$reservation) {
             return false;
         }
-     
+
+    
         return $reservation->update([
             'status' => 'canceled'
         ]);
     }
+
 
 
 

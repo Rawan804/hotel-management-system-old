@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\HallReservationRequest;
 use App\Http\Requests\HallRequest;
 use Illuminate\Support\Str;
-use App\Services\HallService;
+use App\Services\HallService ;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -16,12 +16,12 @@ class HallController extends Controller
 {
     protected HallService $hallService;
 
-    public function __construct(HallService $hallService)
-    {
-        $this->hallService = $hallService;
-    }
+   public function __construct(HallService $hallService)
+{
 
-    // 1. تابع إضافة قاعدة
+    $this->hallService = $hallService;
+}
+    // 1. تابع إضافة قاعة جديدة
     public function store(HallRequest $request): JsonResponse
     {
         try {
@@ -75,6 +75,7 @@ class HallController extends Controller
         'capacity'    => $hall->capacity
     ];
 }
+
 //تابع العرض
     public function index(): JsonResponse
     {
@@ -82,7 +83,8 @@ class HallController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => __('messages.halls_fetch_successs'),
+
+            'message' => __('messages.fetch_successs'),
             'data'    => $halls
         ], 200);
     }
@@ -90,6 +92,7 @@ class HallController extends Controller
     //تابع الحجز
     public function reserve(HallReservationRequest $request): JsonResponse
     {
+
         try {
             $customerId = Auth::id();
             $reservation = $this->hallService->createReservation($customerId, $request->validated());
@@ -107,7 +110,9 @@ class HallController extends Controller
             ], 400);
         }
     }
+
 //عرض كل الحجوزات
+
     public function getHallReservation(): JsonResponse
     {
         $reservation = $this->hallService->getAllReservations();
@@ -118,6 +123,7 @@ class HallController extends Controller
             'data'    => $reservation
         ], 200);
     }
+
 //عرض حجوزات قاعة معينة
     public function getHallReservations($hallId): JsonResponse
     {
@@ -131,7 +137,9 @@ class HallController extends Controller
     }
 
 
+
     //الغاء الحجز
+
     public function cancelReserve(int $id): JsonResponse
     {
         $customerId = Auth::id();
@@ -149,7 +157,9 @@ class HallController extends Controller
         ], 200);
     }
 
+
     //عدد حجوزات قاعة
+
     public function monthlyReservations($hallId): JsonResponse
     {
         $stats = $this->hallService->countMonthlyReservationsByHall((int) $hallId);

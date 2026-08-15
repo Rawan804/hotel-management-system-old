@@ -135,7 +135,8 @@ return [
     'request_already_completed' => 'Request already completed',
 
     'request_completed' => 'Request completed successfully',
-
+        'Your leave request has been approved'=>'Your leave request has been approved',
+     'Your leave request has been rejected'=>'Your leave request has been rejected',
 
 
 ];

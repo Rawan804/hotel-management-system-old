@@ -30,7 +30,7 @@ class Staff extends Authenticatable
         'service_load',
         'max_load',
         'overloaded',
-         'fcm_token'
+        'fcm_token'
         
     ];
 

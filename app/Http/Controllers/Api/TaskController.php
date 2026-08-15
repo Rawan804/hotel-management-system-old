@@ -55,7 +55,9 @@ class TaskController extends Controller
             'data' => $task
         ]);
     }
+
 public function myTasks()
+
 {
     $staff = Auth::user();
 
@@ -74,6 +76,7 @@ public function myTasks()
 
     $tasks = Task::with(['fixedTask', 'items.item'])
         ->where('staff_id', $staff->staff_id)
+        ->where('created_at','>=',now()->subHour(12))
         ->orderByDesc('id')
         ->get();
 

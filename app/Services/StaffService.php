@@ -3,30 +3,70 @@
 namespace App\Services;
 
 use App\Models\Staff;
+use Exception;
 use Illuminate\Support\Facades\Hash;
-use Exception; 
 
 use Illuminate\Support\Facades\Storage;
 class StaffService
 {
-    public function create(array $data, Staff $creator)
+//اضافة موظف
+public function create(array $data, Staff $creator): array
     {
-        // 1. إذا كان المنشئ supervisor
-        if ($creator->role === 'supervisor') {
+      
+        if (in_array($creator->role, ['supervisor','service_manager',
+        ])) {
+
             $data['dep_id'] = $creator->dep_id;
             $data['role'] = 'employee';
         }
+        if (
+            $creator->role === 'general_manager' && $data['role'] === 'supervisor'
+        ) {
 
-        if ($creator->role === 'general_manager' && $data['role'] === 'supervisor') {
             if (empty($data['dep_id'])) {
-                throw new Exception( __('messages.The section must be specified when creating a supervisor'), 422);
-            }
-            $activeSupervisorExists = Staff::where('dep_id', $data['dep_id'])
-                                            ->where('role', 'supervisor')
-                                            ->where('is_active', true) ->exists();
+                throw new Exception(
+                    __('messages.The section must be specified when creating a supervisor'),
+                    422
+                );}
+
+            $activeSupervisorExists = Staff::where(
+                    'dep_id',
+                    $data['dep_id']
+                )
+                ->where('role', 'supervisor')
+                ->where('is_active', true)
+                ->exists();
 
             if ($activeSupervisorExists) {
-                throw new Exception( __('messages.already has an active supervisor'), 422);
+                throw new Exception(
+                    __('messages.already has an active supervisor'),
+                    422
+                );
+            }
+        }
+
+        if ($creator->role === 'general_manager' && $data['role'] === 'service_manager'
+        ) {
+            if (empty($data['dep_id'])) {
+              throw new Exception(
+                    __('messages.The section must be specified when creating a service manager'),
+                    422
+                ); }
+            $activeServiceManagerExists = Staff::where(
+                    'dep_id',
+                    $data['dep_id']
+                )
+                ->where('role', 'service_manager')
+                ->where('is_active', true)
+                ->exists();
+
+            if ($activeServiceManagerExists) {
+
+                throw new Exception(
+                    __('messages.already has an active service manager'),
+                    422
+                );
+
             }
         }
 
@@ -37,77 +77,116 @@ class StaffService
             'email' => $data['email'],
             'image' => $data['image'] ?? null,
             'password' => Hash::make($data['password']),
+            'created_at' => now(),
             'role' => $data['role'],
-            'created_at' => $creator->staff_id,
+            'status' => $data['status'],
+            'max_load' => $data['max_load'],
+            'service_load' => $data['service_load'],
+
         ]);
   
         return [
-            'staff' => $staff
+            'staff' => $staff,
         ];
 
     
     }
 
 
-public function updateRole(Staff $staff, array $data)
-{
-    $newRole = $data['role'];
+ //تعديل الرول
+    public function updateRole(
+        Staff $staff,
+        array $data
+    ): Staff {$newRole = $data['role'];
 
-    if ($newRole === 'supervisor') {
-      
-    $activeSupervisorExists = Staff::where('dep_id', $staff->dep_id)
-                                        ->where('role', 'supervisor')
-                                        ->where('is_active', true)
-                                        ->where('staff_id', '!=', $staff->staff_id) 
-                                       ->exists();
-
-        if ($activeSupervisorExists) {
+        if ($newRole === 'general_manager') {
             throw new Exception(
-  __('messages.already has an active supervisor'), 422);
+                __('messages.cannot assign general manager role'),
+                403
+            ); }
+
+        if ($newRole === 'supervisor') {
+
+            $activeSupervisorExists = Staff::where(
+                    'dep_id',
+                    $staff->dep_id
+                )
+                ->where('role', 'supervisor')
+                ->where('is_active', true)
+                ->where('staff_id', '!=', $staff->staff_id)
+                ->exists();
+
+            if ($activeSupervisorExists) {
+                throw new Exception(
+                    __('messages.already has an active supervisor'),
+                    422
+                ); }
         }
+
+        if ($newRole === 'service_manager') {
+
+            $activeServiceManagerExists = Staff::where(
+                    'dep_id',  $staff->dep_id
+                )
+                ->where('role', 'service_manager')
+                ->where('is_active', true)
+                ->where('staff_id', '!=', $staff->staff_id)
+                ->exists();
+
+            if ($activeServiceManagerExists) {
+
+                throw new Exception(
+                    __('messages.already has an active service manager'),
+                    422
+                );
+            }
+        }
+        $staff->role = $newRole;
+        $staff->save();
+        return $staff;}
+
+
+//تعديل معلومات الموظف
+    public function updateInfo(Staff $staff,array $data, Staff $user):
+     Staff {
+
+        if (in_array($user->role, ['supervisor','service_manager'])) {
+
+            if ($staff->dep_id !== $user->dep_id) {
+
+                throw new Exception(
+                    __('messages.not_allowed'),
+                    403
+                );
+            }
+            unset($data['dep_id']);
+            unset($data['role']);
+        }
+        if (!empty($data['password'])) {
+
+            $data['password'] = Hash::make(
+                $data['password']
+            );
+
+        } else {
+
+            unset($data['password']);
+        }
+        $staff->update($data);
+
+        return $staff;
     }
 
-    $staff->role = $newRole;
-    $staff->save();
-
-    return $staff;
-}
-
-public function updateInfo(Staff $staff, array $data, Staff $user)
-{
-    
-    if ($user->role === 'supervisor') {
-
-        if ($staff->dep_id !== $user->dep_id) {
-            throw new Exception( __('messages.not_allowed'), 403);
-        }
-
-        unset($data['dep_id']);
-     
-        unset($data['role']); 
-    }
-
-    if (!empty($data['password'])) {
-        $data['password'] = Hash::make($data['password']);
-    } else {
-        unset($data['password']);   }
-  
-    $staff->update($data);
-
-    return $staff;
-}
-public function saveFirebaseToken(
-    $staff,
+      public function saveFirebaseToken(
+      $staff,
     string $token
-): bool
-{
-
+    ): bool
+     {
     $staff->update([
 
         'fcm_token' => $token
 
     ]);
-
 
     return true;
 }
