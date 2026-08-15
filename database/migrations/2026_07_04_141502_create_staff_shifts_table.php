@@ -6,32 +6,38 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
        Schema::create('staff_shifts', function (Blueprint $table) {
+
     $table->id();
 
     $table->foreignId('staff_id')
         ->constrained('staff', 'staff_id')
         ->cascadeOnDelete();
 
-    $table->date('shift_date');
+    // يوم الأسبوع
+    $table->enum('day_of_week', [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday'
+    ]);
 
     $table->time('start_time');
+
     $table->time('end_time');
 
-    $table->boolean('is_active')->default(true);
+    $table->boolean('is_active')
+        ->default(true);
 
     $table->timestamps();
-});
-    }
 
-    /**
-     * Reverse the migrations.
-     */
+});}
+
     public function down(): void
     {
         Schema::dropIfExists('staff_shifts');

@@ -30,4 +30,33 @@ class RoomService
     {
         return $room->delete();
     }
+
+public function updateRoomsStatus()
+{
+    $rooms = Room::all();
+
+    foreach ($rooms as $room) {
+
+        $hasActiveBooking = \App\Models\Booking::where('room_id', $room->id)
+            ->where('status', 'confirmed')
+            ->whereDate('startDate', '<=', now())
+            ->whereDate('endDate', '>=', now())
+            ->exists();
+
+
+        if ($hasActiveBooking) {
+
+            $room->update([
+                'status' => 'occupied'
+            ]);
+
+        } else {
+
+            $room->update([
+                'status' => 'available'
+            ]);
+
+        }
+    }
+}
 }

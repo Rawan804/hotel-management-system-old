@@ -15,7 +15,6 @@ class FixedTask extends Model
         'name_ar',
         'name_en',
 
-        // 🔥 مهم جدًا
         'weight',
 
         'is_active'

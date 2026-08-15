@@ -7,6 +7,7 @@ use App\Models\Room;
 use App\Models\RoomCategory;
 use Illuminate\Support\Facades\DB;
 use  Carbon\Carbon;
+use App\Services\RoomService;
 
 
 class BookingService
@@ -24,7 +25,10 @@ class BookingService
         $end   = $data['endDate'];
         $count = $data['rooms_count'] ?? 1;
 
-        $rooms = Room::where('room_category_id', $data['room_category_id'])
+
+        app(RoomService::class)->updateRoomsStatus();
+
+      /*  $rooms = Room::where('room_category_id', $data['room_category_id'])
             ->where('status', 'available')
             ->whereDoesntHave('bookings', function ($q) use ($start, $end) {
                 $q->where('status', 'confirmed')
@@ -35,6 +39,19 @@ class BookingService
             })
             ->limit($count)
             ->get();
+*/
+
+$rooms = Room::where('room_category_id', $data['room_category_id'])
+    ->whereDoesntHave('bookings', function ($q) use ($start, $end) {
+        $q->where('status', 'confirmed')
+          ->where(function ($query) use ($start, $end) {
+              $query->where('startDate', '<=', $end)
+                    ->where('endDate', '>=', $start);
+          });
+    })
+    ->limit($count)
+    ->get();
+
 
         if ($rooms->count() < $count) {
             return [
@@ -57,7 +74,12 @@ class BookingService
                     'status'      => 'confirmed'
                 ]);
 
-                $room->update(['status' => 'occupied']);
+                if ($start <= now()->toDateString() && $end >= now()->toDateString()) {
+    $room->update([
+        'status' => 'occupied'
+    ]);
+}
+             //   $room->update(['status' => 'occupied']);
 
                 $bookings[] = [
                     'book_id'     => $booking->book_id,
@@ -86,12 +108,28 @@ class BookingService
             $booking->update([
                 'status' => 'cancelled'
             ]);
-
+/*
             if ($booking->room) {
                 $booking->room->update([
                     'status' => 'available'
                 ]);
-            }
+            }*/
+
+
+              if ($booking->room) {
+
+    $hasCurrentBooking = Booking::where('room_id', $booking->room_id)
+        ->where('status', 'confirmed')
+        ->whereDate('startDate', '<=', now())
+        ->whereDate('endDate', '>=', now())
+        ->exists();
+
+
+    $booking->room->update([
+        'status' => $hasCurrentBooking ? 'occupied' : 'available'
+    ]);
+
+}
         });
 
         return true;

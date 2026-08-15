@@ -8,7 +8,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 class ServiceRequestService
 {
 
@@ -22,13 +22,20 @@ class ServiceRequestService
         return DB::transaction(function () use ($data, $customer) {
 
 
-            $booking = Booking::where('customer_id', $customer->id)
+           /* $booking = Booking::where('customer_id', $customer->id)
                 ->where('status','confirmed')
                 ->latest()
                 ->first();
-
+*/
+$booking = Booking::where('customer_id', $customer->id)
+    ->where('status', 'confirmed')
+    ->whereDate('startDate', '<=', now())
+    ->whereDate('endDate', '>=', now())
+    ->latest()
+    ->first();
 
             if(!$booking){
+                
                 return null;
             }
 
@@ -148,10 +155,14 @@ $weight = $service->weight ?? 1;
     | FIND BEST STAFF
     |--------------------------------------------------------------------------
     */
+    
 private function findBestStaff($dep_id)
 {
-    $staffs = Staff::where('dep_id', $dep_id)
-        ->where('is_active', true)
+    
+    
+$staffs = Staff::where('dep_id', $dep_id)
+    ->where('role', 'employee')
+            ->where('is_active', true)
         ->whereNotIn('status', [
             'offline',
             //'overloaded',
@@ -166,7 +177,7 @@ private function findBestStaff($dep_id)
 
 
     // فقط الموظفين داخل الشفت الحالي
-    $staffs = $staffs->filter(function ($staff) {
+   /* $staffs = $staffs->filter(function ($staff) {
 
         foreach ($staff->shifts as $shift) {
 
@@ -190,9 +201,44 @@ private function findBestStaff($dep_id)
 
         return false;
     });
+*/
+// فقط الموظفين داخل الشفت الحالي
+// فقط الموظفين داخل الشفت الحالي حسب التاريخ والوقت
+$staffs = $staffs->filter(function ($staff) {
+
+    foreach ($staff->shifts as $shift) {
 
 
+        $today = strtolower(
+            Carbon::now()->englishDayOfWeek
+        );
 
+
+        $shiftDay = strtolower(
+            trim($shift->day_of_week)
+        );
+
+
+        $currentTime = now()->format('H:i:s');
+
+
+        if(
+            $shift->is_active &&
+            $shiftDay === $today &&
+            $currentTime >= $shift->start_time &&
+            $currentTime <= $shift->end_time
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+});
     if ($staffs->isEmpty()) {
         return null;
     }
@@ -394,7 +440,11 @@ if($staff->service_load > $staff->max_load){
 
                 ]);
 
-            }
+/*
+// استخدم refreshStaffStatus بدلاً من التحديث المباشر
+$staff = Staff::find($request->staff_id);
+$this->refreshStaffStatus($staff);
+        */    }
 
 
 
@@ -501,6 +551,8 @@ else{
     $staff->status = 'available';
 
 }
+// تحديث حالة الموظف باستخدام الدالة الموحدة
+//$this->refreshStaffStatus($staff);
 
 
 
@@ -551,7 +603,12 @@ else{
 
     }
 
-*/private function refreshStaffStatus($staff)
+*/
+
+//الاصلي
+
+
+private function refreshStaffStatus($staff)
 {
 
     if($staff->service_load > $staff->max_load){
@@ -573,6 +630,175 @@ else{
     $staff->save();
 
 }
+
+/* solve2
+private function refreshStaffStatus($staff)
+{
+    // 1. التحقق من الحمل أولاً
+    if ($staff->service_load > $staff->max_load) {
+        $staff->status = 'overloaded';
+    }
+    else {
+        // 2. التحقق من وجود طلبات قيد التنفيذ (in_progress) فقط
+        $hasInProgress = ServiceRequest::where('staff_id', $staff->staff_id)
+            ->where('status', 'in_progress')
+            ->exists();
+
+        if ($hasInProgress) {
+            $staff->status = 'busy';
+        } else {
+            $staff->status = 'available';
+        }
+    }
+
+    $staff->save();
+}
+*/
+
+
+/*
+private function refreshStaffStatus($staff)
+{
+
+    if($staff->service_load > $staff->max_load){
+
+        $staff->status = 'overloaded';
+
+    }
+
+
+    $staff->save();
+
+}*/
+
+/*
+private function refreshStaffStatus($staff)
+{
+
+    if($staff->service_load > $staff->max_load){
+
+        $staff->status='overloaded';
+
+    }
+    else{
+
+        $activeRequests = ServiceRequest::where(
+            'staff_id',
+            $staff->staff_id
+        )
+        ->whereIn('status',[
+            'pending',
+            'in_progress'
+        ])
+        ->count();
+
+
+        if($activeRequests > 0){
+            $staff->status='busy';
+        }
+        else{
+            $staff->status='available';
+        }
+
+    }
+
+
+    $staff->save();
+
+}
+
+
+*/
+
+// new
+
+
+
+public function reassignDelayedRequests()
+{
+    return DB::transaction(function () {
+
+
+        $delayedRequests = ServiceRequest::where('status', 'pending')
+            ->whereNotNull('staff_id')
+            ->where('assigned_at', '<=', now()->subMinutes(1))
+            ->get();
+
+
+        foreach ($delayedRequests as $request) {
+
+
+            // الموظف القديم
+            $oldStaff = Staff::find($request->staff_id);
+
+
+            if($oldStaff){
+
+                $oldStaff->service_load =
+                    max(
+                        0,
+                        $oldStaff->service_load - ($request->weight ?? 1)
+                    );
+
+
+                $this->refreshStaffStatus($oldStaff);
+
+            }
+
+
+
+            // إزالة الموظف القديم
+            $request->update([
+
+                'staff_id'=>null,
+
+                'assign_attempts'=>
+                    $request->assign_attempts + 1
+
+            ]);
+
+
+
+            // اختيار موظف جديد
+            $newStaff = $this->findBestStaff(
+                $request->dep_id
+            );
+
+
+
+            if($newStaff){
+
+
+                $request->update([
+
+                    'staff_id'=>$newStaff->staff_id,
+
+                    'assigned_at'=>now()
+
+                ]);
+
+
+                $newStaff->increment(
+                    'service_load',
+                    $request->weight ?? 1
+                );
+
+
+                $this->refreshStaffStatus($newStaff);
+
+
+            }
+
+
+        }
+
+
+        return $delayedRequests;
+
+    });
+}
+
+
 
 /*
 |--------------------------------------------------------------------------
