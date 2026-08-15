@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ComplaintRequest;
 use App\Services\ComplaintService;
-use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class ComplaintController extends Controller
@@ -18,12 +19,10 @@ class ComplaintController extends Controller
         $this->complaintService = $complaintService;
     }
 
-    /**
-     * Create a new complaint
-     */
     public function store(ComplaintRequest $request): JsonResponse
     {
         try {
+
             $currentUser = Auth::user();
 
             $complaint = $this->complaintService->createComplaint(
@@ -34,91 +33,67 @@ class ComplaintController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => __('messages.created_successC'),
-                'data'    => $complaint,
+                'data'    => $complaint
             ], 201);
 
         } catch (Exception $e) {
 
-            $code = $e->getCode();
-
-            if ($code < 400 || $code > 599) {
-                $code = 500;
-            }
+            $code = ($e->getCode() === 403) ? 403 : 500;
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], $code);
         }
     }
 
-    /**
-     * Update complaint status
-     */
-    public function updateStatus(
-        ComplaintRequest $request,
-        int $id
-    ): JsonResponse {
+    public function updateStatus(ComplaintRequest $request, $id): JsonResponse
+    {
         try {
             $currentUser = Auth::user();
 
-            $validated = $request->validated();
-
             $complaint = $this->complaintService->updateStatus(
                 $id,
-                $validated['status'],
+                $request->validated()['status'],
                 $currentUser
             );
 
             return response()->json([
                 'success' => true,
                 'message' => __('messages.updated_success'),
-                'data'    => $complaint,
-            ], 200);
+                'data' => $complaint
+            ]);
 
-        } catch (Exception $e) {
-
-            $code = $e->getCode();
-
-            if ($code < 400 || $code > 599) {
-                $code = 500;
-            }
+        } catch (\Exception $e) {
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], $code);
+                'message' => $e->getMessage()
+            ], 403);
         }
     }
 
-    /**
-     * Get complaints according to current user's role
-     */
     public function getDepartmentComplaints(): JsonResponse
     {
         try {
-            $currentUser = Auth::user();
 
-            $complaints = $this->complaintService
-                ->getComplaintsForUser($currentUser);
+            $supervisor = Auth::user();
+
+            $complaints = $this->complaintService->getComplaintsForUser($supervisor);
 
             return response()->json([
                 'success' => true,
                 'message' => __('messages.fetch_successC'),
-                'data'    => $complaints,
+                'data' => $complaints
             ], 200);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
-            $code = $e->getCode();
-
-            if ($code < 400 || $code > 599) {
-                $code = 500;
-            }
+            $code = ($e->getCode() >= 400 && $e->getCode() <= 500) ? $e->getCode() : 400;
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage()
             ], $code);
         }
     }
