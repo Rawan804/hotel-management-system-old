@@ -8,9 +8,10 @@ use App\Http\Requests\RestaurantRequest;
 use App\Services\RestaurantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Exception;
-
+use Illuminate\Support\Str;
+use Exception; 
 class RestaurantController extends Controller
+
 {
     protected RestaurantService $restaurantService;
 
@@ -23,11 +24,12 @@ class RestaurantController extends Controller
     public function store(RestaurantRequest $request): JsonResponse
     {
         try {
-            $restaurant = $this->restaurantService->createRestaurant($request->all());
+           
+        $hall = $this->restaurantService->createRestaurant($request->all());
 
             return response()->json([
                 'message' => __('messages.created_successfully'),
-                'data'    => $this->formatHallResponse($restaurant)
+                'data'    => $this->formatHallResponse($hall)
             ], 201);
 
         } catch (Exception $e) {
@@ -36,10 +38,12 @@ class RestaurantController extends Controller
     }
 
     // تابع تعديل المطعم
-    public function update(RestaurantRequest $request, $res_id): JsonResponse
+     public function update(RestaurantRequest $request, $res_id): JsonResponse
     {
         try {
-            $restaurant = $this->restaurantService->updateRestaurant((int) $res_id, $request->all());
+         
+          $restaurant = $this->restaurantService->updateRestaurant((int) $res_id, $request->all());
+          //  $hall = $this->hallService->updateHall($hall_id, $request->all());
 
             return response()->json([
                 'message' => __('messages.update successfuly'),
@@ -51,18 +55,28 @@ class RestaurantController extends Controller
         }
     }
 
-    // تابع مساعد - بيستخدم نفس منطق الـ service لبناء الرابط
+
+    //تابع مساعد
     private function formatHallResponse($restaurant): array
     {
+        $imagePath = $restaurant->image;
+        
+        // تعديل: دمج مجلد restaurants مع الاسم إذا لم يكن رابطاً خارجياً جاهزاً
+        $imageUrl = Str::startsWith($imagePath, ['http://', 'https://']) 
+            ? $imagePath 
+            : url('storage/restaurant/' . $imagePath);
+
         return [
-            'res_id'     => $restaurant->res_id,
-            'name_en'    => $restaurant->name_en,
-            'name_ar'    => $restaurant->name_ar,
-            'image'      => $this->restaurantService->buildImageUrl($restaurant->image),
-            'details_en' => $restaurant->details_en,
-            'details_ar' => $restaurant->details_ar
+            'res_id'      => $restaurant->res_id,
+            'name_en'     => $restaurant->name_en,
+            'name_ar'     => $restaurant->name_ar,
+            'image'       => $imageUrl, // سيظهر الرابط كاملاً وصحيحاً هنا
+            'details_en'  => $restaurant->details_en,
+            'details_ar'  => $restaurant->details_ar
         ];
     }
+
+
 
     public function index(): JsonResponse
     {
