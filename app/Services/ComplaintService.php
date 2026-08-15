@@ -71,12 +71,12 @@ class ComplaintService
         $currentUser
     ) {
         // التأكد من أن الحالة صحيحة
-        if (!in_array($status, ['approved', 'rejected'])) {
-            throw new Exception(
-                __('messages.invalid_complaint_status'),
-                422
-            );
-        }
+       if (!in_array($status, ['resolved', 'rejected'])) {
+    throw new Exception(
+        __('messages.invalid_complaint_status'),
+        422
+    );
+}
 
         $complaint = Complaint::where(
             'com_id',
