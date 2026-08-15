@@ -206,7 +206,7 @@ public function activeRequests()
     ]);
 }
 
-
+/*
 public function isWorkingNow()
 {
     $now = now();
@@ -217,6 +217,21 @@ public function isWorkingNow()
         ->whereTime('start_time','<=',$now->format('H:i:s'))
         ->whereTime('end_time','>=',$now->format('H:i:s'))
         ->exists();
+}*/
+public function isWorkingNow() 
+{ 
+    $now = now();
+
+    $today = strtolower($now->englishDayOfWeek);
+
+    $currentTime = $now->format('H:i:s');
+
+    return $this->shifts()
+        ->where('is_active', true)
+        ->where('day_of_week', $today)
+        ->whereTime('start_time', '<=', $currentTime)
+        ->whereTime('end_time', '>=', $currentTime)
+        ->exists(); 
 }
 public function isAvailable()
 {

@@ -16,7 +16,7 @@ class TaskController extends Controller
     // إنشاء Tasks من Fixed Template
     public function createFromTemplate($id)
     {
-        $this->service->createFromTemplate($id);
+     /*   $this->service->createFromTemplate($id);
 
         return response()->json([
             'success' => true,
@@ -25,6 +25,24 @@ class TaskController extends Controller
                 : 'Tasks created for staff',
         ]);
     }
+*/
+$task = $this->service->createFromTemplate($id);
+
+if (!$task) {
+    return response()->json([
+        'success' => false,
+        'message' => app()->getLocale() === 'ar'
+            ? 'الموظف خارج وقت الدوام'
+            : 'Staff is not currently working'
+    ]);
+}
+
+return response()->json([
+    'success' => true,
+    'message' => app()->getLocale() === 'ar'
+        ? 'تم إنشاء المهمة'
+        : 'Task created',
+]);}
 
     // toggle checklist item
     public function toggleItem(Request $request)
@@ -55,12 +73,9 @@ class TaskController extends Controller
             'data' => $task
         ]);
     }
-
 public function myTasks()
-
 {
     $staff = Auth::user();
-
 
     if (!$staff) {
 
@@ -70,6 +85,16 @@ public function myTasks()
                 ? 'غير مصرح'
                 : 'Unauthenticated'
         ], 401);
+
+    }
+
+
+    if (!$staff->isWorkingNow()) {
+
+        return response()->json([
+            'success' => true,
+            'data' => []
+        ]);
 
     }
 

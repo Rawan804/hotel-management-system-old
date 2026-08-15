@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Task;
 use App\Models\Staff;
+use App\Models\StaffShift;
+
 use App\Models\FixedTask;
 use App\Models\TaskItemStatus;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +19,17 @@ public function createFromTemplate($templateId)
 
         $template = FixedTask::with('items')->findOrFail($templateId);
 
-        // 🔥 موظف واحد فقط
         $staff = Staff::findOrFail($template->staff_id);
 
-        $task = Task::create([
-            'staff_id'      => $staff->staff_id,
-            'fixed_task_id' => $template->id,
-            'status'        => 'pending',
-        ]);
+if (!$staff->isWorkingNow()) {
+    return null;
+}
 
+$task = Task::create([
+    'staff_id'      => $staff->staff_id,
+    'fixed_task_id' => $template->id,
+    'status'        => 'pending',
+]);
         foreach ($template->items as $item) {
             TaskItemStatus::create([
                 'task_id'             => $task->id,
@@ -68,4 +72,6 @@ if ($allDone) {
 }
 return $task->load('fixedTask', 'items');        });
     }
+
+   
 }

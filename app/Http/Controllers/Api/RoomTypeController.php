@@ -62,6 +62,7 @@ class RoomTypeController extends Controller
     }
 }*/
 
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
