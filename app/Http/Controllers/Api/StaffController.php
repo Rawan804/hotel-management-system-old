@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStaffRequest;
 use App\Http\Requests\UpdateStaffInfoRequest;
 use App\Models\Staff;
+use App\Models\StaffShift;
 use App\Services\StaffService;
 use App\Http\Requests\SaveFcmTokenRequest;
 use Exception;
@@ -312,14 +313,12 @@ public function saveFirebaseToken(
 
 
 
-
 // إضافة شيفت لموظف
 public function addShift(Request $request)
 {
     $user = Auth::user();
 
 
-    // الصلاحيات
     if (!in_array($user->role, [
         'general_manager',
         'supervisor',
@@ -335,13 +334,11 @@ public function addShift(Request $request)
     }
 
 
-
-    // البيانات المطلوبة
     $request->validate([
 
         'staff_id' => 'required|exists:staff,staff_id',
 
-        'shift_date' => 'required|date',
+        'day_of_week' => 'required|string',
 
         'start_time' => 'required',
 
@@ -351,15 +348,12 @@ public function addShift(Request $request)
 
 
 
-    // الموظف الذي نضيف له الشيفت
     $staff = Staff::findOrFail(
         $request->staff_id
     );
 
 
 
-    // المدير العام يقدر على كل الأقسام
-    // الباقي فقط ضمن قسمه
     if (
         $user->role !== 'general_manager'
         &&
@@ -376,12 +370,11 @@ public function addShift(Request $request)
 
 
 
-    // إنشاء الشيفت
     $shift = StaffShift::create([
 
         'staff_id' => $staff->staff_id,
 
-        'shift_date' => $request->shift_date,
+        'day_of_week' => strtolower($request->day_of_week),
 
         'start_time' => $request->start_time,
 
@@ -404,4 +397,5 @@ public function addShift(Request $request)
         'data' => $shift
 
     ], 201);
-}}
+}
+}
