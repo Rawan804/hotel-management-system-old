@@ -148,4 +148,52 @@ class RoomController extends Controller
         'data' => $rooms->map(fn($room) => $this->transformRoom($room))
     ]);
 }
+
+
+public function update(StoreRoomRequest $request, $id)
+{
+    if ($check = $this->guardAdmin()) {
+        return $check;
+    }
+
+
+    $room = Room::findOrFail($id);
+
+
+    $room = $this->service->update(
+        $room,
+        $request->validated()
+    );
+
+
+    return response()->json([
+        'message' => app()->getLocale() === 'ar'
+            ? 'تم تعديل الغرفة بنجاح'
+            : 'Room updated successfully',
+
+        'data' => $this->transformRoom(
+            $room->load('category.roomType')
+        )
+    ]);
+}
+
+public function destroy($id)
+{
+    if ($check = $this->guardAdmin()) {
+        return $check;
+    }
+
+
+    $room = Room::findOrFail($id);
+
+
+    $this->service->delete($room);
+
+
+    return response()->json([
+        'message' => app()->getLocale() === 'ar'
+            ? 'تم حذف الغرفة بنجاح'
+            : 'Room deleted successfully'
+    ]);
+}
 }

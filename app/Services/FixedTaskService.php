@@ -18,7 +18,7 @@ class FixedTaskService
                 'name_ar'  => $data['name_ar'],
                 'name_en'  => $data['name_en'],
                     'estimated_minutes' => $data['estimated_minutes'] ?? 30,
-
+ 'weight' => $data['weight'] ?? 1,
                 'is_active'=> $data['is_active'] ?? true,
             ]);
 

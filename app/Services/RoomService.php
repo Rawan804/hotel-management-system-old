@@ -15,16 +15,16 @@ class RoomService
         ]);
     }
 
-    public function update(Room $room, array $data): Room
-    {
-        $room->update([
-            'room_category_id' => $data['room_category_id'],
-            'room_number' => $data['room_number'],
-            'status' => $data['status']
-        ]);
+  public function update(Room $room, array $data): Room
+{
+    $room->update([
+        'room_category_id' => $data['room_category_id'],
+        'room_number' => $data['room_number'],
+        'status' => $data['status'] ?? $room->status
+    ]);
 
-        return $room;
-    }
+    return $room;
+}
 
     public function delete(Room $room): bool
     {

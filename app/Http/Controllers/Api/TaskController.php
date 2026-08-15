@@ -15,9 +15,7 @@ class TaskController extends Controller
     }
 
 
-    // =========================================================
-    // إنشاء Tasks من Fixed Task Template
-    // =========================================================
+
     public function createFromTemplate($id)
     {
         $this->service->createFromTemplate($id);
@@ -32,9 +30,7 @@ class TaskController extends Controller
     }
 
 
-    // =========================================================
-    // Toggle Checklist Item
-    // =========================================================
+
     public function toggleItem(Request $request)
     {
         $request->validate([
@@ -42,19 +38,7 @@ class TaskController extends Controller
         ]);
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | TaskService مسؤول عن:
-        |
-        | 1. تغيير حالة الـ checkbox
-        | 2. بدء المهمة
-        | 3. تغيير حالة الموظف إلى busy
-        | 4. زيادة service_load
-        | 5. إنهاء المهمة عند اكتمال كل العناصر
-        | 6. إنقاص service_load
-        | 7. إعادة حساب حالة الموظف
-        |--------------------------------------------------------------------------
-        */
+      
 
         $task = $this->service->toggleItem(
             $request->task_item_id
@@ -74,14 +58,17 @@ class TaskController extends Controller
         ]);
     }
 
-
-    // =========================================================
-    // مهام الموظف الحالي
-    // =========================================================
     public function myTasks()
     {
         $staff = Auth::user();
+if (!$staff->isWorkingNow()) {
 
+    return response()->json([
+        'success' => true,
+        'data' => []
+    ]);
+
+}
 
         if (!$staff) {
 
@@ -122,9 +109,6 @@ class TaskController extends Controller
     }
 
 
-    // =========================================================
-    // عرض مهام موظف معين
-    // =========================================================
     public function staffTasks($id)
     {
         $tasks = Task::with([
@@ -150,4 +134,29 @@ class TaskController extends Controller
 
         ]);
     }
+
+
+    public function createTaskFromFixed($id)
+{
+    $staff = Auth::user();
+
+    if (!$staff) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthenticated'
+        ], 401);
+    }
+
+
+    $task = $this->service->createFromTemplate($id);
+
+
+    return response()->json([
+        'success' => true,
+        'message' => app()->getLocale() === 'ar'
+            ? 'تم إنشاء المهمة للموظف'
+            : 'Task created for staff',
+        'data' => $task
+    ]);
+}
 }

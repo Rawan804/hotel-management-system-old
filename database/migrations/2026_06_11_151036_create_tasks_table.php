@@ -21,7 +21,6 @@ return new class extends Migration {
     $table->enum('status', ['pending','in_progress','completed'])
         ->default('pending');
 
-    // 🔥 مهم جدًا لتوحيد الحمل
     $table->integer('weight')->default(1);
 
     $table->timestamps();

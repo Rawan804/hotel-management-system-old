@@ -76,8 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rooms/maintenance', [RoomController::class, 'maintenanceRooms']);
 
     Route::post('/rooms', [RoomController::class, 'store']);
-    Route::put('/rooms/{room}', [RoomController::class, 'update']);
-    Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+    Route::put('/rooms/{id}', [RoomController::class, 'update']);
+    Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
 
 });
 
@@ -372,5 +372,19 @@ Route::middleware('auth:sanctum')->group(function () {
     '/staff/shifts',
     [StaffController::class, 'addShift']
 );
+
+});
+
+Route::middleware(['auth:sanctum', 'staff'])->group(function () {
+
+    Route::post(
+        '/fixed-tasks/assign',
+        [FixedTaskController::class, 'assignTask']
+    );
+
+    Route::post(
+        '/tasks/create-from-fixed/{id}',
+        [TaskController::class, 'createTaskFromFixed']
+    );
 
 });
