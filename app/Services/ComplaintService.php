@@ -35,7 +35,7 @@ class ComplaintService
         $employee,
         string $status
     ): void {
-        if ($status === 'approved') {
+        if ($status === 'resolved') {
 
             $title = __('messages.complaint_approved_title');
 
