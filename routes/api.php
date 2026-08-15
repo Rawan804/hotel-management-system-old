@@ -50,25 +50,49 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-
+/*
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::put('/rooms/{room}', [RoomController::class, 'update']);
     Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+});*/
+
+
+//مدير عام غرف تايب كاتيغوري
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/room-categories', [RoomCategoryController::class, 'store']);
+    Route::put('/room-categories/{roomCategory}', [RoomCategoryController::class, 'update']);
+    Route::delete('/room-categories/{roomCategory}', [RoomCategoryController::class, 'destroy']);
+    Route::post('/room-categories/{id}/images', [RoomCategoryController::class, 'addImage']);
+
+    Route::post('/room-types', [RoomTypeController::class, 'store']);
+    Route::put('/room-types/{roomType}', [RoomTypeController::class, 'update']);
+    Route::delete('/room-types/{roomType}', [RoomTypeController::class, 'destroy']);
+
+    Route::get('/rooms', [RoomController::class, 'index']);
+    Route::get('/rooms/available', [RoomController::class, 'availableRooms']);
+    Route::get('/rooms/occupied', [RoomController::class, 'occupiedRooms']);
+    Route::get('/rooms/maintenance', [RoomController::class, 'maintenanceRooms']);
+
+    Route::post('/rooms', [RoomController::class, 'store']);
+    Route::put('/rooms/{room}', [RoomController::class, 'update']);
+    Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+
 });
 
 Route::prefix('room-types')->group(function () {
     Route::get('/', [RoomTypeController::class, 'index']);
-    Route::post('/', [RoomTypeController::class, 'store']);
-    Route::put('/{roomType}', [RoomTypeController::class, 'update']);
-    Route::delete('/{roomType}', [RoomTypeController::class, 'destroy']);
+   // Route::post('/', [RoomTypeController::class, 'store']);
+   // Route::put('/{roomType}', [RoomTypeController::class, 'update']);
+   // Route::delete('/{roomType}', [RoomTypeController::class, 'destroy']);
 });
 
 Route::prefix('room-categories')->group(function () {
     Route::get('/', [RoomCategoryController::class, 'index']);
-    Route::post('/', [RoomCategoryController::class, 'store']);
-    Route::put('/{roomCategory}', [RoomCategoryController::class, 'update']);
-    Route::delete('/{roomCategory}', [RoomCategoryController::class, 'destroy']);
+   // Route::post('/', [RoomCategoryController::class, 'store']);
+   // Route::put('/{roomCategory}', [RoomCategoryController::class, 'update']);
+   // Route::delete('/{roomCategory}', [RoomCategoryController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -129,9 +153,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/news/{news}', [HotelNewsController::class, 'destroy']);
     Route::get('/pinned-news', [HotelNewsController::class, 'pinnedNews']);
 });
+Route::middleware(['auth:sanctum', 'customer'])->group(function () {
+    Route::post('/halls/reserve', [HallController::class, 'reserve']);
+    Route::get('/halls/reserve', [HallController::class, 'getHallReservation']);
 
+    Route::post('/restaurants/reserve', [RestaurantController::class, 'reserve']);
+    Route::get('/restaurants/reserve', [RestaurantController::class, 'getRestaurantReservation']);
+      
+});
 
 Route::middleware('auth:sanctum')->group(function () {
+    
     Route::put('/leaveRequest/{id}/status', [LeaveRequestsController::class, 'updateStatus']);
     Route::get('/leaveRequests', [LeaveRequestsController::class, 'getDepartmentLeaveRequests']);
    Route::put('/complaints/{id}/status', [ComplaintController::class, 'updateStatus']);
@@ -178,13 +210,9 @@ Route::middleware(['auth:sanctum', 'customer'])->group(function () {
     Route::post('/service-requests', [ServiceRequestController::class, 'store']);
     Route::get('/service-requests/my', [ServiceRequestController::class, 'customerRequests']);
 
-    Route::post('/restaurants/reserve', [RestaurantController::class, 'reserve']);
-    Route::get('/restaurants/reserve', [RestaurantController::class, 'getRestaurantReservation']);
-    
     Route::delete('/restaurants/reservations/{id}', [RestaurantController::class, 'cancelReserve']);
 
-    Route::post('/halls/reserve', [HallController::class, 'reserve']);
-    Route::get('/halls/reserve', [HallController::class, 'getHallReservation']);
+  
     
     Route::patch('/halls/reservations/{id}/cancel', [HallController::class, 'cancelReserve']);
     Route::get('customer/my-bookings', [CustomerAuthController::class, 'myBookings']);

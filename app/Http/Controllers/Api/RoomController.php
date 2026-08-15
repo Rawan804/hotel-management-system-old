@@ -60,6 +60,10 @@ class RoomController extends Controller
             return $check;
         }
 
+
+        $this->service->updateRoomsStatus();
+        
+
         $rooms = Room::with('category.roomType')->get();
 
         return response()->json([
@@ -74,6 +78,10 @@ class RoomController extends Controller
             return $check;
         }
 
+
+        $this->service->updateRoomsStatus();
+
+        //جديد
         $rooms = Room::with('category.roomType')
             ->where('status', 'available')
             ->orderBy('room_number')
@@ -90,6 +98,12 @@ class RoomController extends Controller
         if ($check = $this->guardAdmin()) {
             return $check;
         }
+
+
+
+        $this->service->updateRoomsStatus();
+
+
 
         $rooms = Room::with('category.roomType')
             ->where('status', 'occupied')
