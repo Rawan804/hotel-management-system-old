@@ -139,4 +139,26 @@ return [
      'Your leave request has been rejected'=>'Your leave request has been rejected',
 
 
+     'complaint_approved_title' => 'Complaint Approved',
+
+'complaint_approved_message' =>
+    'Your complaint has been reviewed and approved.',
+
+'complaint_rejected_title' => 'Complaint Rejected',
+
+'complaint_rejected_message' =>
+    'Your complaint has been reviewed and rejected.',
+
+'complaint_status_updated_title' => 'Complaint Status Updated',
+
+'complaint_status_updated_message' =>
+    'The status of your complaint has been updated.',
+
+'invalid_complaint_status' =>
+    'Invalid complaint status.',
+
+'employee_not_found' =>
+    'Employee not found.',
+
+
 ];

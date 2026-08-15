@@ -20,7 +20,7 @@ public function createHall(array $data): Hall
         $image = $data['image'];
         $imageName = time() . '.' . $image->getClientOriginalExtension();
     
-        $image->move(public_path('halls'), $imageName);
+        $image->storeAs('halls', $imageName, 'public');
         
         $data['image'] = $imageName; 
     }
@@ -39,9 +39,9 @@ public function updateHall(int $hallId, array $data): Hall
 
     if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
         
-       if ($hall->image && \Illuminate\Support\Facades\File::exists(public_path('halls/' . $hall->image))) {
-            \Illuminate\Support\Facades\File::delete(public_path('halls/' . $hall->image));
-        }
+   if ($hall->image) {
+    \Illuminate\Support\Facades\Storage::disk('public')->delete('halls/' . $hall->image);
+}
 
         $image = $data['image'];
         $imageName = time() . '.' . $image->getClientOriginalExtension();

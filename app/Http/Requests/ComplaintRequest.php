@@ -6,15 +6,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ComplaintRequest extends FormRequest
 {
-    
     public function authorize(): bool
     {
-        return true; 
+        return true;
     }
 
     public function rules(): array
     {
-       if ($this->isMethod('put')) {
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
             return [
                 'status' => 'required|in:resolved,rejected',
             ];

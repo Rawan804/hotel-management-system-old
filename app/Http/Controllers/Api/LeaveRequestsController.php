@@ -13,23 +13,18 @@ use Illuminate\Support\Facades\Auth;
 class LeaveRequestsController extends Controller
 {
     protected LeaveRequestsService $leaveRequestsService;
-
     public function __construct(LeaveRequestsService $leaveRequestsService)
     {
         $this->leaveRequestsService = $leaveRequestsService;
     }
-
     public function store(LeaveRequests $request): JsonResponse
     {
         try {
-
-            $currentUser = Auth::user();
-
+           $currentUser = Auth::user();
             $leaveRequests = $this->leaveRequestsService->createLeave(
                 $request->validated(),
                 $currentUser
             );
-
             return response()->json([
                 'success' => true,
                 'message' => __('messages.created_success'),
@@ -39,42 +34,34 @@ class LeaveRequestsController extends Controller
         } catch (Exception $e) {
 
             Log::error('Error creating leave request: '.$e->getMessage());
-
             return response()->json([
                 'success' => false,
                 'message' => __('messages.created_error')
             ], 500);
         }
     }
-
-
     public function updateStatus(LeaveRequests $request, $id): JsonResponse
     {
         try {
 
             $supervisor = Auth::user();
-
             $leaveRequest = $this->leaveRequestsService->updateStatus(
                 $id,
                 $request->validated()['status'],
                 $supervisor
             );
-
             return response()->json([
                 'success' => true,
                 'message' => __('messages.updated_success'),
                 'data' => $leaveRequest
             ]);
-
         } catch (Exception $e) {
-
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
             ], 403);
         }
     }
-
     public function getDepartmentLeaveRequests(): JsonResponse
     {
         try {

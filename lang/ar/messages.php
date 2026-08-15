@@ -133,5 +133,27 @@ return [
 
     'Your leave request has been approved'=>'تم قبول طلب الاجازة',
    'Your leave request has been rejected'=>'تم رفض طلب الاجازة',
+
+
+   'complaint_approved_title' => 'تمت الموافقة على الشكوى',
+
+'complaint_approved_message' =>
+    'تمت مراجعة شكواك والموافقة عليها.',
+
+'complaint_rejected_title' => 'تم رفض الشكوى',
+
+'complaint_rejected_message' =>
+    'تمت مراجعة شكواك ورفضها.',
+
+'complaint_status_updated_title' => 'تم تحديث حالة الشكوى',
+
+'complaint_status_updated_message' =>
+    'تم تحديث حالة شكواك.',
+
+'invalid_complaint_status' =>
+    'حالة الشكوى غير صالحة.',
+
+'employee_not_found' =>
+    'الموظف غير موجود.',
    
    ];
