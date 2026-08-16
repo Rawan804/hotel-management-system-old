@@ -22,17 +22,13 @@ class Hall extends Model
         'name_ar',
         'price'
     ];
+public function getImageAttribute($value)
+{
+    return asset('storage/' . $value);
+}
 
-    protected function image(): Attribute
-    {
-        return Attribute::make(
-             get: function ($value) {
 
-                // إذا كان الاسم مخزن مباشرة مثل "restaurant1.jpg" والمجلد في الـ public هو "restaurants"
-                return URL::to('/halls/' . $value);
-            }
-        );
-    }
+    
 
     public function reservations()
     {

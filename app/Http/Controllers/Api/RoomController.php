@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRoomRequest;
+use App\Http\Requests\UpdateRoomRequest;
 use App\Models\Room;
 use App\Services\RoomService;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,7 @@ class RoomController extends Controller
         return null;
     }
 
+
     private function transformRoom($room)
     {
         return [
@@ -37,6 +39,7 @@ class RoomController extends Controller
             'status' => $room->status,
 
             'category' => $room->category ? [
+
                 'name' => app()->getLocale() === 'ar'
                     ? $room->category->name_ar
                     : $room->category->name_en,
@@ -54,15 +57,14 @@ class RoomController extends Controller
         ];
     }
 
+
     public function index()
     {
         if ($check = $this->guardAdmin()) {
             return $check;
         }
 
-
         $this->service->updateRoomsStatus();
-        
 
         $rooms = Room::with('category.roomType')->get();
 
@@ -72,16 +74,15 @@ class RoomController extends Controller
         ]);
     }
 
+
     public function availableRooms()
     {
         if ($check = $this->guardAdmin()) {
             return $check;
         }
 
-
         $this->service->updateRoomsStatus();
 
-        //جديد
         $rooms = Room::with('category.roomType')
             ->where('status', 'available')
             ->orderBy('room_number')
@@ -93,17 +94,14 @@ class RoomController extends Controller
         ]);
     }
 
+
     public function occupiedRooms()
     {
         if ($check = $this->guardAdmin()) {
             return $check;
         }
 
-
-
         $this->service->updateRoomsStatus();
-
-
 
         $rooms = Room::with('category.roomType')
             ->where('status', 'occupied')
@@ -114,6 +112,25 @@ class RoomController extends Controller
             'data' => $rooms->map(fn($room) => $this->transformRoom($room))
         ]);
     }
+
+
+    public function maintenanceRooms()
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
+
+        $rooms = Room::with('category.roomType')
+            ->where('status', 'maintenance')
+            ->orderBy('room_number')
+            ->get();
+
+        return response()->json([
+            'message' => 'Maintenance rooms fetched successfully',
+            'data' => $rooms->map(fn($room) => $this->transformRoom($room))
+        ]);
+    }
+
 
     public function store(StoreRoomRequest $request)
     {
@@ -129,71 +146,62 @@ class RoomController extends Controller
             'message' => app()->getLocale() === 'ar'
                 ? 'تم إنشاء الغرفة بنجاح'
                 : 'Room created successfully',
-            'data' => $this->transformRoom($room->load('category.roomType'))
+
+            'data' => $this->transformRoom(
+                $room->load('category.roomType')
+            )
         ], 201);
     }
-    public function maintenanceRooms()
-{
-    if ($check = $this->guardAdmin()) {
-        return $check;
-    }
-
-    $rooms = Room::with('category.roomType')
-        ->where('status', 'maintenance')
-        ->orderBy('room_number')
-        ->get();
-
-    return response()->json([
-        'message' => 'Maintenance rooms fetched successfully',
-        'data' => $rooms->map(fn($room) => $this->transformRoom($room))
-    ]);
-}
 
 
-public function update(StoreRoomRequest $request, $id)
-{
-    if ($check = $this->guardAdmin()) {
-        return $check;
-    }
+
+    public function update(UpdateRoomRequest $request, $id)
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
 
 
-    $room = Room::findOrFail($id);
+        $room = Room::findOrFail($id);
 
 
-    $room = $this->service->update(
-        $room,
-        $request->validated()
-    );
+        $room = $this->service->update(
+            $room,
+            $request->validated()
+        );
 
 
-    return response()->json([
-        'message' => app()->getLocale() === 'ar'
-            ? 'تم تعديل الغرفة بنجاح'
-            : 'Room updated successfully',
+        return response()->json([
 
-        'data' => $this->transformRoom(
-            $room->load('category.roomType')
-        )
-    ]);
-}
+            'message' => app()->getLocale() === 'ar'
+                ? 'تم تعديل الغرفة بنجاح'
+                : 'Room updated successfully',
 
-public function destroy($id)
-{
-    if ($check = $this->guardAdmin()) {
-        return $check;
+            'data' => $this->transformRoom(
+                $room->load('category.roomType')
+            )
+        ]);
     }
 
 
-    $room = Room::findOrFail($id);
+
+    public function destroy($id)
+    {
+        if ($check = $this->guardAdmin()) {
+            return $check;
+        }
 
 
-    $this->service->delete($room);
+        $room = Room::findOrFail($id);
 
 
-    return response()->json([
-        'message' => app()->getLocale() === 'ar'
-            ? 'تم حذف الغرفة بنجاح'
-            : 'Room deleted successfully'
-    ]);
-}
+        $this->service->delete($room);
+
+
+        return response()->json([
+            'message' => app()->getLocale() === 'ar'
+                ? 'تم حذف الغرفة بنجاح'
+                : 'Room deleted successfully'
+        ]);
+    }
 }

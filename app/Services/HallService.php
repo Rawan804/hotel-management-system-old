@@ -8,6 +8,7 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\Storage;
 
 
 class HallService
@@ -17,14 +18,13 @@ class HallService
 public function createHall(array $data): Hall
 {
     if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-        $image = $data['image'];
-        $imageName = time() . '.' . $image->getClientOriginalExtension();
-    
-        $image->storeAs('halls', $imageName, 'public');
-        
-        $data['image'] = $imageName; 
-    }
 
+            $image = $data['image'];
+
+            $imagePath = $image->store('halls', 'public');
+
+            $data['image'] = $imagePath;
+        }
     return Hall::create($data);
 }
 
@@ -38,20 +38,18 @@ public function updateHall(int $hallId, array $data): Hall
     });
 
     if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-        
-   if ($hall->image) {
-    \Illuminate\Support\Facades\Storage::disk('public')->delete('halls/' . $hall->image);
-}
+       
+    if ($hall->image) {
+            Storage::disk('public')->delete($hall->image);
+        }
 
-        $image = $data['image'];
-        $imageName = time() . '.' . $image->getClientOriginalExtension();
-      
-        $image->move(public_path('halls'), $imageName);
-        
-        $data['image'] = $imageName;
+        $imagePath = $data['image']->store('halls', 'public');
+
+         $data['image'] = $imagePath;
     }
 
     $hall->update($data);
+
     return $hall;
 }
     

@@ -53,7 +53,8 @@ class TaskController extends Controller
                 ? 'تم التحديث'
                 : 'Updated',
 
-            'data' => $task
+           // 'data' => $task
+           'data' => $this->transformTask($task)
 
         ]);
     }
@@ -103,7 +104,10 @@ if (!$staff->isWorkingNow()) {
 
             'success' => true,
 
-            'data' => $tasks
+         //   'data' => $tasks
+         'data' => $tasks->map(
+    fn($task) => $this->transformTask($task)
+)
 
         ]);
     }
@@ -130,7 +134,10 @@ if (!$staff->isWorkingNow()) {
 
             'success' => true,
 
-            'data' => $tasks
+           // 'data' => $tasks
+            'data' => $tasks->map(
+        fn($task) => $this->transformTask($task)
+    )
 
         ]);
     }
@@ -158,5 +165,30 @@ if (!$staff->isWorkingNow()) {
             : 'Task created for staff',
         'data' => $task
     ]);
+}
+
+private function transformTask($task)
+{
+    return [
+        'id' => $task->id,
+
+        'staff_id' => $task->staff_id,
+
+      'status' => match($task->status) {
+
+    'pending' => __('messages.status.pending'),
+
+    'in_progress' => __('messages.status.in_progress'),
+
+    'completed' => __('messages.status.completed'),
+
+    default => $task->status,
+},
+        'weight' => $task->weight,
+
+        'fixed_task' => $task->fixedTask,
+
+        'items' => $task->items,
+    ];
 }
 }

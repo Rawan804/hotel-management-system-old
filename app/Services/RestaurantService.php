@@ -5,6 +5,7 @@ use App\Models\Restaurant;
 use App\Models\ReservationCustomer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 class RestaurantService
 {
 
@@ -12,46 +13,41 @@ class RestaurantService
 public function createRestaurant(array $data): Restaurant
     {
         if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+
             $image = $data['image'];
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            
-        
-           $image->move(public_path('restaurants'), $imageName);
-            
-            // حفظ الاسم فقط في قاعدة البيانات
-            $data['image'] = $imageName; 
+
+            $imagePath = $image->store('resturants', 'public');
+
+            $data['image'] = $imagePath;
         }
 
         return Restaurant::create($data);
     }
 
-    // 2. تابع تعديل المطعم
-    public function updateRestaurant(int $resId, array $data): Restaurant
-    {
-        $restaurant = Restaurant::findOrFail($resId);
+// 2. تابع تعديل المطعم
+public function updateRestaurant(int $resId, array $data): Restaurant
+{
+    $restaurant = Restaurant::findOrFail($resId);
 
-        $data = array_filter($data, function ($value) {
-            return $value !== null;
-        });
+    $data = array_filter($data, function ($value) {
+        return $value !== null;
+    });
 
-        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
-            // تصحيح: فحص وحذف الصورة القديمة من مجلد restaurants
-           if ($restaurant->image) {
-    \Illuminate\Support\Facades\Storage::disk('public')->delete('restaurants/' . $restaurant->image);
-}
+    if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
 
-            $image = $data['image'];
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            
-            // تصحيح: رفع الصورة الجديدة إلى مجلد restaurants وليس halls
-            $image->move(public_path('restaurants'), $imageName);
-            
-            $data['image'] = $imageName;
+        // حذف الصورة القديمة
+        if ($restaurant->image) {
+            Storage::disk('public')->delete($restaurant->image);
         }
 
-        $restaurant->update($data);
-        return $restaurant;
+        $imagePath = $data['image']->store('restaurants', 'public');
+  $data['image'] = $imagePath;
     }
+
+    $restaurant->update($data);
+
+    return $restaurant;
+}
 
  public function getAllRestaurants(): Collection
     {
