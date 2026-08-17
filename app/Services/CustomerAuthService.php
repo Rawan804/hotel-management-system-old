@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Collection;
 class CustomerAuthService
 {
     public function register(array $data)
@@ -195,5 +195,22 @@ public function getCustomerWithBookingsAndServices(int $customerId)
     ];
 }
 
+public function getAllcustomers(): Collection
+    {
+        $locale = request()->header('Accept-Language', 'ar'); 
+        $customers = Customer::select(['id', 'name', 'phone', 'email'])->get();
+
+    return $customers->map(function ($customer) use ($locale) {
+   
+
+    return [
+        'customer_id'   => $customer->id,
+        'name'      =>$customer->name,
+        'phone'   => $customer->phone,
+        'email'     => $customer->email,
+        'password'  => $customer->password,
+    ];
+}); 
+    }
 
 }

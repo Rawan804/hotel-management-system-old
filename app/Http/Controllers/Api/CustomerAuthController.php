@@ -9,7 +9,7 @@ use App\Models\Customer;
 use Illuminate\Support\Facades\Hash;
 use App\Services\CustomerAuthService;
 use Illuminate\Http\Request;
-
+use Illuminate\Http\JsonResponse;
 class CustomerAuthController extends Controller
 {
     public function __construct(
@@ -96,4 +96,16 @@ class CustomerAuthController extends Controller
     ]);
 }
 
+//تابع العرض
+    public function index(): JsonResponse
+    {
+        $customers = $this->customerAuthService->getAllcustomers();
+
+        return response()->json([
+            'status'  => true,
+
+            'message' => __('messages.fetch_successs'),
+            'data'    => $customers
+        ], 200);
+    }
 }
