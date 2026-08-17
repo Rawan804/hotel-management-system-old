@@ -75,4 +75,25 @@ class CustomerAuthController extends Controller
             'bookings' => $bookings
         ]);
     }
+
+    public function customerFullDetails(Request $request, $customerId)
+{
+    $manager = $request->user();
+
+    if ($manager->role !== 'general_manager') {
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized'
+        ], 403);
+    }
+
+    $data = $this->customerAuthService->getCustomerWithBookingsAndServices($customerId);
+
+    return response()->json([
+        'success' => true,
+        'data'    => $data
+    ]);
+}
+
 }

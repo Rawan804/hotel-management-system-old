@@ -116,4 +116,84 @@ class CustomerAuthService
         });
 
     return $rooms->concat($restaurants)->concat($meetings)->values()->all();
-}}
+}
+
+
+public function getCustomerWithBookingsAndServices(int $customerId)
+{
+    $locale = request()->header('Accept-Language', 'ar');
+
+    $customer = \App\Models\Customer::with([
+        'bookings.room',
+        'bookings.serviceRequests.service',
+        'bookings.serviceRequests.staff',
+        'hallReservations.hall',
+        'restaurantReservations.restaurant',
+    ])->findOrFail($customerId);
+
+    return [
+        'customer_id' => $customer->id,
+        'name'        => $customer->name,
+        'phone'       => $customer->phone ?? null,
+
+        // حجوزات الغرف + الخدمات المرتبطة فيها
+        'room_bookings' => $customer->bookings->map(function ($booking) use ($locale) {
+
+            return [
+                'book_id'     => $booking->book_id,
+                'room_number' => optional($booking->room)->room_number,
+                'startDate'   => $booking->startDate,
+                'endDate'     => $booking->endDate,
+                'status'      => $booking->status,
+
+                'services' => $booking->serviceRequests->map(function ($req) use ($locale) {
+
+                    return [
+                        'id'           => $req->id,
+                        'service_name' => $req->service
+                            ? ($locale === 'en' ? $req->service->name_en : $req->service->name_ar)
+                            : null,
+                        'details'      => $req->details,
+                        'location'     => $req->location,
+                        'weight'       => $req->weight,
+                        'status'       => $req->status,
+                        'staff_name'   => optional($req->staff)->name,
+                    ];
+
+                }),
+            ];
+        }),
+
+        // حجوزات القاعات
+        'hall_bookings' => $customer->hallReservations->map(function ($resv) use ($locale) {
+
+            return [
+                'resev_id'   => $resv->resev_id,
+                'hall_id'    => $resv->hall_id,
+                'hall_name'  => $resv->hall
+                    ? ($locale === 'en' ? $resv->hall->name_en : $resv->hall->name_ar)
+                    : null,
+                'start_time' => $resv->start_time,
+                'end_time'   => $resv->end_time,
+                'status'     => $resv->status,
+            ];
+        }),
+
+        // حجوزات المطاعم
+        'restaurant_bookings' => $customer->restaurantReservations->map(function ($resv) use ($locale) {
+
+            return [
+                'res_cus_id'       => $resv->res_cus_id,
+                'res_id'           => $resv->res_id,
+                'restaurant_name'  => $resv->restaurant
+                    ? ($locale === 'en' ? $resv->restaurant->name_en : $resv->restaurant->name_ar)
+                    : null,
+                'person_num'       => $resv->person_num,
+                'reservation_time' => $resv->reservation_time,
+            ];
+        }),
+    ];
+}
+
+
+}

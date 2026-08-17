@@ -190,7 +190,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
    Route::post('restaurants', [RestaurantController::class, 'store']);
    Route::post('restaurants/{res_id}',[RestaurantController::class,'update']);
-    });
+    
+    Route::get('/customers/{customerId}/full-details', [CustomerAuthController::class, 'customerFullDetails']);
+
+   
+   });
 //..................................................................................................
 //customer بدون حماية
 //.................................................................................................
