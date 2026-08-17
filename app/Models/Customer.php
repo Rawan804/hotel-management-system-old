@@ -26,6 +26,7 @@ class Customer extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+
     public function services()
     {
         return $this->hasMany(ServiceCustomer::class);
@@ -34,7 +35,15 @@ class Customer extends Authenticatable
      public function ReservationCustomer() {
     return $this->hasMany(ReservationCustomer::class, 'customer_id');
      }
+public function hallReservations()
+{
+    return $this->hasMany(\App\Models\Reservation::class, 'customer_id');
+}
 
+public function restaurantReservations()
+{
+    return $this->hasMany(\App\Models\ReservationCustomer::class, 'customer_id');
+}
     public function  Reservation() {
     return $this->hasMany( Reservation::class, 'customer_id');
      }

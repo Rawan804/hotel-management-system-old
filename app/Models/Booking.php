@@ -20,7 +20,10 @@ class Booking extends Model
         'endDate',
         'status',
     ];
-
+public function serviceRequests()
+{
+    return $this->hasMany(\App\Models\ServiceRequest::class, 'booking_id', 'book_id');
+}
     public function room()
     {
         return $this->belongsTo(Room::class);
