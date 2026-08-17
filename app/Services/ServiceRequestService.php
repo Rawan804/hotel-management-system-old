@@ -608,27 +608,50 @@ else{
 //الاصلي
 
 
+//الاخير
 private function refreshStaffStatus($staff)
 {
-
-    if($staff->service_load > $staff->max_load){
-
-        $staff->status='overloaded';
-
-    }
-    elseif($staff->service_load <= $staff->max_load){
-
-        if(
-            $staff->status === 'overloaded'
-        ){
-            $staff->status='available';
-        }
-
+    // إذا الموظف برا الشيفت
+    if (!$staff->isWorkingNow()) {
+        $staff->status = 'offline';
     }
 
+    // إذا الموظف عنده إجازة معتمدة حالياً
+    elseif (
+        $staff->leaves()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->exists()
+    ) {
+        $staff->status = 'offline';
+    }
+
+    // إذا الموظف باستراحة
+    elseif ($staff->status === 'on_break') {
+        $staff->status = 'on_break';
+    }
+
+    // إذا الحمل تجاوز الحد
+    elseif ($staff->service_load > $staff->max_load) {
+        $staff->status = 'overloaded';
+    }
+
+    // إذا عنده طلبات pending أو in_progress
+    elseif (
+        $staff->serviceRequests()
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->exists()
+    ) {
+        $staff->status = 'busy';
+    }
+
+    // ما عنده طلبات
+    else {
+        $staff->status = 'available';
+    }
 
     $staff->save();
-
 }
 
 /* solve2
@@ -721,7 +744,7 @@ public function reassignDelayedRequests()
 
         $delayedRequests = ServiceRequest::where('status', 'pending')
             ->whereNotNull('staff_id')
-            ->where('assigned_at', '<=', now()->subMinutes(1))
+            ->where('assigned_at', '<=', now()->subMinutes(15))
             ->get();
 
 
