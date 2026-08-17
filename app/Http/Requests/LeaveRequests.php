@@ -25,7 +25,7 @@ class LeaveRequests extends FormRequest
         'type' =>'required|string',
         'start_date'=>'required|date|after_or_equal:today',
         'end_date'=>'required|date|after:start_date',
-         'reason'=>'required|string|min:10'
+         'reason'=>'required|string'
         ];
     }
 }
