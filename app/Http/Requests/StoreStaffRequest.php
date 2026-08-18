@@ -21,7 +21,7 @@ class StoreStaffRequest extends FormRequest
         
         if ($this->isMethod('put')) {
 
-            return [ 'role' => ['required',
+            return [ 'role' => ['nullable',
                     'in:supervisor,service_manager,employee',],
             ];
         }
