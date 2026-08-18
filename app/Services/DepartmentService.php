@@ -9,14 +9,15 @@ class DepartmentService
     // جلب جميع الأقسام
     public function getAll()
     {
-        return Department::select('dep_id', 'name')->get();
+        return Department::select('dep_id', 'name_ar','name_en')->get();
     }
 
     // إنشاء قسم جديد
     public function create(array $data)
     {
         return Department::create([
-            'name' => $data['name'],
+            'name_ar' => $data['name_ar'],
+             'name_en' => $data['name_en']
         ]);
     }
 
@@ -24,15 +25,16 @@ class DepartmentService
     public function update(Department $department, array $data)
     {
         $department->update([
-            'name' => $data['name'],
+            'name_ar' => $data['name_ar'],
+             'name_en' => $data['name_en']
         ]);
 
         return $department;
     }
 
-    // حذف قسم
-    public function delete(Department $department)
-    {
-        return $department->delete();
-    }
+    // // حذف قسم
+    // public function delete(Department $department)
+    // {
+    //     return $department->delete();
+    // }
 }
