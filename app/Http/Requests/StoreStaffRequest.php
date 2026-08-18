@@ -40,7 +40,7 @@ class StoreStaffRequest extends FormRequest
 
             'image' => ['nullable','image','mimes:jpg,png,jpeg','max:2048'],
 
-            'role' => ['required',
+            'role' => ['nullable',
                 'in:supervisor,service_manager,employee'],
 
             'status' => ['required','in:available,busy,offline,on_break,overloaded',
