@@ -25,7 +25,8 @@ class DepartmentController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
+             'name_en' => 'nullable|string|max:255',
         ]);
 
         $department = $this->departmentService->create($validatedData);
@@ -40,7 +41,8 @@ class DepartmentController extends Controller
     public function update(Request $request, Department $department)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
+             'name_en' => 'required|string|max:255',
         ]);
 
         $updatedDepartment = $this->departmentService->update($department, $validatedData);
@@ -51,13 +53,13 @@ class DepartmentController extends Controller
         ]);
     }
 
-    // حذف قسم
-    public function destroy(Department $department)
-    {
-        $this->departmentService->delete($department);
+    // // حذف قسم
+    // public function destroy(Department $department)
+    // {
+    //     $this->departmentService->delete($department);
 
-        return response()->json([
-            'message' => 'Department deleted successfully'
-        ]);
-    }
+    //     return response()->json([
+    //         'message' => 'Department deleted successfully'
+    //     ]);
+    // }
 }
