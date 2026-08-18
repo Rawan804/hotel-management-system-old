@@ -45,6 +45,19 @@ public function index()
             ->where('role', '!=', 'supervisor')
             ->get();
     }
+
+
+  elseif ($user->role === 'service_manager') {
+        $staff = Staff::select($selectedColumns)->where('is_active', true)
+            ->with(['department' => function($query) {
+    $query->select('dep_id', 'name_ar', 'name_en');
+}])
+            ->where('dep_id', $user->dep_id)
+            ->where('role', '!=', 'service_manager')
+            ->get();
+    }
+
+
     else {
         return response()->json(['message' => 'Forbidden'], 403);
     }
