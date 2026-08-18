@@ -16,18 +16,27 @@ class TaskController extends Controller
 
 
 
-    public function createFromTemplate($id)
-    {
-        $this->service->createFromTemplate($id);
+  public function createFromTemplate($id)
+{
+    $task = $this->service->createFromTemplate($id);
 
+    if (!$task) {
         return response()->json([
-            'success' => true,
-
+            'success' => false,
             'message' => app()->getLocale() === 'ar'
-                ? 'تم إنشاء المهام للموظفين'
-                : 'Tasks created for staff',
-        ]);
+                ? 'لا يمكن إنشاء المهمة، الموظف خارج الشيفت أو في إجازة'
+                : 'The task cannot be created because the employee is outside their shift or on leave',
+        ], 422);
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => app()->getLocale() === 'ar'
+            ? 'تم إنشاء المهمة للموظف'
+            : 'Task created for staff',
+        'data' => $task,
+    ]);
+}
 
 
 
@@ -143,7 +152,7 @@ if (!$staff->isWorkingNow()) {
     }
 
 
-    public function createTaskFromFixed($id)
+    /*public function createTaskFromFixed($id)
 {
     $staff = Auth::user();
 
@@ -157,6 +166,36 @@ if (!$staff->isWorkingNow()) {
 
     $task = $this->service->createFromTemplate($id);
 
+
+    return response()->json([
+        'success' => true,
+        'message' => app()->getLocale() === 'ar'
+            ? 'تم إنشاء المهمة للموظف'
+            : 'Task created for staff',
+        'data' => $task
+    ]);
+}*/
+public function createTaskFromFixed($id)
+{
+    $staff = Auth::user();
+
+    if (!$staff) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthenticated'
+        ], 401);
+    }
+
+    $task = $this->service->createFromTemplate($id);
+
+    if (!$task) {
+        return response()->json([
+            'success' => false,
+            'message' => app()->getLocale() === 'ar'
+                ? 'لا يمكن إنشاء المهمة، الموظف خارج الشيفت أو في إجازة'
+                : 'The task cannot be created because the employee is outside their shift or on leave',
+        ], 422);
+    }
 
     return response()->json([
         'success' => true,

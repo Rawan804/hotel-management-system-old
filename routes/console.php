@@ -13,6 +13,7 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('rooms:update-statuses')->everyMinute();
+Schedule::command('staff:update-statuses')->everyMinute();
 
 
 
@@ -22,3 +23,4 @@ Schedule::call(function () {
         ->reassignDelayedRequests();
 
 })->everyMinute();
+

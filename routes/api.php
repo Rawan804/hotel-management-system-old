@@ -392,3 +392,5 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     );
 
 });
+
+Route::get('/events/today', [EventController::class, 'todayEvents']);

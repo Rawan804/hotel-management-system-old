@@ -205,7 +205,8 @@ $staffs = Staff::where('dep_id', $dep_id)
 // فقط الموظفين داخل الشفت الحالي
 // فقط الموظفين داخل الشفت الحالي حسب التاريخ والوقت
 $staffs = $staffs->filter(function ($staff) {
- foreach ($staff->shifts as $shift) {
+
+    foreach ($staff->shifts as $shift) {
 
 
         $today = strtolower(
@@ -429,7 +430,7 @@ if($staff->service_load > $staff->max_load){
             if($request->staff_id){
 
 
-                Staff::where(
+               /*) Staff::where(
                     'staff_id',
                     $request->staff_id
 
@@ -437,7 +438,12 @@ if($staff->service_load > $staff->max_load){
 
                     'status'=>'busy'
 
-                ]);
+                ]);*/
+                $staff = Staff::find($request->staff_id);
+if ($staff) {
+    $this->refreshStaffStatus($staff);
+}
+
 /*
 // استخدم refreshStaffStatus بدلاً من التحديث المباشر
 $staff = Staff::find($request->staff_id);
@@ -463,7 +469,7 @@ $this->refreshStaffStatus($staff);
     | COMPLETE REQUEST
     |--------------------------------------------------------------------------
     */
-
+/*
     public function completeRequest($id)
     {
 
@@ -568,7 +574,36 @@ else{
 
     }
 
+*/
 
+//completeeee
+public function completeRequest($id)
+{
+    return DB::transaction(function() use($id){
+
+        $request = ServiceRequest::findOrFail($id);
+
+        if($request->status==='done'){
+            return null;
+        }
+
+        $request->update(['status'=>'done']);
+
+        $staff = Staff::find($request->staff_id);
+
+        if($staff){
+
+            // نقص اللود (هاد السطر ضل زي ما هو، ما تغير)
+            $staff->service_load = max(0, $staff->service_load - ($request->weight ?? 1));
+            $staff->save();
+
+            //  بدل كل الـ if/elseif/else، بس نادينا الدالة الموحدة
+            $this->refreshStaffStatus($staff);
+        }
+
+        return $request->fresh('staff');
+    });
+}
 
 
 
@@ -605,7 +640,7 @@ else{
 
 //الاصلي
 
-
+/*
 //الاخير
 private function refreshStaffStatus($staff)
 {
@@ -650,7 +685,7 @@ private function refreshStaffStatus($staff)
     }
 
     $staff->save();
-}
+}*/
 
 /* solve2
 private function refreshStaffStatus($staff)
@@ -680,7 +715,8 @@ private function refreshStaffStatus($staff)
 /*
 private function refreshStaffStatus($staff)
 {
-[8/18/2026 11:38 AM] Esraa Gh: if($staff->service_load > $staff->max_load){
+
+    if($staff->service_load > $staff->max_load){
 
         $staff->status = 'overloaded';
 
@@ -730,6 +766,52 @@ private function refreshStaffStatus($staff)
 
 */
 
+
+
+//اخر وحدة 
+private function refreshStaffStatus($staff)
+{
+    if ($staff->status === 'on_break') {
+        $staff->save();
+        return;
+    }
+
+    $onLeave = $staff->leaves()
+        ->where('status', 'approved')
+        ->whereDate('start_date', '<=', now())
+        ->whereDate('end_date', '>=', now())
+        ->exists();
+
+    $hasOpenTasks = $staff->tasks()
+        ->whereIn('status', ['pending', 'in_progress'])
+        ->exists();
+
+    $hasOpenRequests = $staff->serviceRequests()
+        ->whereIn('status', ['pending', 'in_progress'])
+        ->exists();
+
+    $hasAnyOpenWork = $hasOpenTasks || $hasOpenRequests;
+
+    if (($onLeave || !$staff->isWorkingNow()) && !$hasAnyOpenWork) {
+        $staff->status = 'offline';
+        $staff->save();
+        return;
+    }
+
+    if ($staff->service_load > $staff->max_load) {
+        $staff->status = 'overloaded';
+        $staff->save();
+        return;
+    }
+
+    $hasActiveTask = $staff->tasks()
+        ->where('status', 'in_progress')
+        ->exists();
+
+    $staff->status = ($hasActiveTask || $hasOpenRequests) ? 'busy' : 'available';
+    $staff->save();
+}
+
 // new
 
 
@@ -740,8 +822,16 @@ public function reassignDelayedRequests()
 
 
         $delayedRequests = ServiceRequest::where('status', 'pending')
-            ->whereNotNull('staff_id')
-            ->where('assigned_at', '<=', now()->subMinutes(15))
+         //   ->whereNotNull('staff_id')
+           // ->where('assigned_at', '<=', now()->subMinutes(15))
+           ->where(function ($q) {
+    $q->whereNotNull('staff_id')
+      ->where('assigned_at', '<=', now()->subMinutes(15));
+})
+->orWhere(function ($q) {
+    $q->where('status', 'pending')
+      ->whereNull('staff_id');
+})
             ->get();
 
 

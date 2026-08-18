@@ -137,4 +137,17 @@ public function inactiveEvents()
         'data' => $this->service->getInactive()
     ]);
 }
+
+
+public function todayEvents()
+{
+    $events = Event::whereDate('event_date', today())
+        ->orderBy('event_date', 'asc')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $events
+    ]);
+}
 }
