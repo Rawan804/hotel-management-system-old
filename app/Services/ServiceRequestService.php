@@ -73,7 +73,7 @@ if(!$service){
         'location' => $data['location'] 
             ?? optional($booking->room)->room_number,
 
-        'weight' => null,
+      'weight' => 1,
 
         'status' => 'pending_review'
 
