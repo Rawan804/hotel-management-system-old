@@ -30,17 +30,17 @@ public function index()
    
     if ($user->role === 'general_manager') {
         $staff = Staff::select($selectedColumns)->where('is_active', true)
-            ->with(['department' => function($query) {
-                $query->select('dep_id', 'name');
-            }])
+          ->with(['department' => function($query) {
+         $query->select('dep_id', 'name_ar', 'name_en');
+}])
             ->where('role', '!=', 'general_manager')
             ->get();
     }
     elseif ($user->role === 'supervisor') {
         $staff = Staff::select($selectedColumns)->where('is_active', true)
             ->with(['department' => function($query) {
-                $query->select('dep_id', 'name');
-            }])
+    $query->select('dep_id', 'name_ar', 'name_en');
+}])
             ->where('dep_id', $user->dep_id)
             ->where('role', '!=', 'supervisor')
             ->get();
@@ -56,8 +56,11 @@ $customResponse = $staff->map(function($member) {
             'phone'           => $member->phone,
             'role'            => $member->role,
             'image'           => $member->image,
-            'department_name' => $member->department ? $member->department->name : 'لا يوجد قسم' 
-        ];
+           'department_name_ar' => $member->department ? $member->department->name_ar
+    : 'لا يوجد قسم',
+
+'department_name_en' => $member->department? $member->department->name_en
+    : 'No Department',    ];
 
     });
     return response()->json($customResponse);
