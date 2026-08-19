@@ -26,7 +26,7 @@ public function index()
 {
     $user = Auth::user();
 
-    $selectedColumns = ['staff_id', 'dep_id', 'name', 'email', 'phone', 'role','image']; 
+    $selectedColumns = ['staff_id', 'dep_id', 'name', 'email', 'phone', 'role','image', 'status']; 
    
     if ($user->role === 'general_manager') {
         $staff = Staff::select($selectedColumns)->where('is_active', true)
@@ -63,12 +63,13 @@ public function index()
     }
 $customResponse = $staff->map(function($member) {
         return [
-            'id'              => $member->staff_id, // أضفنا الـ id هنا ليتم إرساله للفرونت إند
+            'id'              => $member->staff_id,
             'name'            => $member->name,
             'email'           => $member->email,
             'phone'           => $member->phone,
             'role'            => $member->role,
             'image'           => $member->image,
+             'status' => $member->status,
            'department_name_ar' => $member->department ? $member->department->name_ar
     : 'لا يوجد قسم',
 
