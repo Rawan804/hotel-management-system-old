@@ -219,7 +219,34 @@ public function saveFirebaseToken(
 
     ]);
 }
+// عرض شيفتات موظف معين
+public function getShifts(Staff $staff)
+{
+    $user = Auth::user();
 
+    // موظف عادي يقدر يشوف شيفتاته فقط
+    if ($user->role === 'employee' && $user->staff_id !== $staff->staff_id) {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+
+    // المشرف / مدير الخدمات يشوف بس موظفي قسمه
+    if (in_array($user->role, ['supervisor', 'service_manager']) && $staff->dep_id !== $user->dep_id) {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+
+    $shifts = StaffShift::where('staff_id', $staff->staff_id)
+        ->where('is_active', true)
+        ->select('id', 'day_of_week', 'start_time', 'end_time')
+        ->orderByRaw("FIELD(day_of_week, 'sunday','monday','tuesday','wednesday','thursday','friday','saturday')")
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'staff_id' => $staff->staff_id,
+        'staff_name' => $staff->name,
+        'shifts' => $shifts
+    ]);
+}
 // إضافة شيفت لموظف
 // إضافة شيفت لموظف
 public function addShift(Request $request)

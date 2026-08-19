@@ -381,6 +381,9 @@ Route::middleware('auth:sanctum')->group(function () {
 );
 
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/staff/{staff}/shifts', [StaffController::class, 'getShifts']);
+});
 
 Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 
