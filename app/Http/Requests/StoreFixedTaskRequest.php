@@ -15,13 +15,14 @@ class StoreFixedTaskRequest extends FormRequest
     {
         return [
             'dep_id' => 'required|exists:departments,dep_id',
-            'staff_id' => 'required|exists:staff,staff_id',
+          //  'staff_id' => 'required|exists:staff,staff_id',
 
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
 
             // ممكن نخليها اختيارية حسب النظام
             'is_active' => 'nullable|boolean',
+            'weight' => 'nullable|integer|min:1',
 
             // items checklist
             'items' => 'nullable|array',
