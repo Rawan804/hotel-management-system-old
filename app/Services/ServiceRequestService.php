@@ -34,10 +34,11 @@ $booking = Booking::where('customer_id', $customer->id)
     ->latest()
     ->first();
 
-            if(!$booking){
-                
-                return null;
-            }
+          if (!$booking) {
+    return [
+        'error' => 'no_booking'
+    ];
+}
 
 /*
 

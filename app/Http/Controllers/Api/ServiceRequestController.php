@@ -27,21 +27,32 @@ class ServiceRequestController extends Controller
     public function store(StoreServiceRequestRequest $request)
     {
 
-        $result = $this->service->create(
-            $request->validated(),
-            $request->user()
-        );
+     $result = $this->service->create(
+    $request->validated(),
+    $request->user()
+);
 
+// الزبون لا يملك حجزاً فعالاً
+if (is_array($result) && ($result['error'] ?? null) === 'no_booking') {
 
+    return response()->json([
+        'success' => false,
+        'message' => app()->getLocale() === 'ar'
+            ? 'يرجى إجراء حجز أولاً قبل طلب الخدمة'
+            : 'Please make a booking first before requesting a service'
+    ], 422);
+       }
 
-        if (!$result) {
+// يوجد حجز، لكن لا يوجد موظف متاح
+    if (!$result) {
 
-            return response()->json([
-                'success' => false,
-                'message' => 'No staff available in this department and shift'
-            ], 409);
-
-        }
+    return response()->json([
+        'success' => false,
+        'message' => app()->getLocale() === 'ar'
+            ? 'لا يوجد موظف متاح في هذا القسم والشيفت'
+            : 'No staff available in this department and shift'
+    ], 409);
+      }
 
 
 
