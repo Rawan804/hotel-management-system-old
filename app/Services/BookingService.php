@@ -12,24 +12,26 @@ use App\Services\RoomService;
 
 class BookingService
 {
-    public function create(array $data, $customer)
-    {
-        if (!$customer) {
-            return [
-                'success' => false,
-                'message' => __('messages.unauthorized')
-            ];
-        }
+ public function create(array $data, $customer)
+{
+    if (!$customer) {
+        return [
+            'success' => false,
+            'message' => __('messages.unauthorized')
+        ];
+    }
 
-        $start = $data['startDate'];
-        $end   = $data['endDate'];
-        $count = $data['rooms_count'] ?? 1;
+    $start = $data['startDate'];
+    $end   = $data['endDate'];
+    $count = $data['rooms_count'] ?? 1;
 
+    app(RoomService::class)->updateRoomsStatus();
 
-        app(RoomService::class)->updateRoomsStatus();
+    $result = null;
 
-      /*  $rooms = Room::where('room_category_id', $data['room_category_id'])
-            ->where('status', 'available')
+    DB::transaction(function () use ($data, $customer, $start, $end, $count, &$result) {
+
+        $rooms = Room::where('room_category_id', $data['room_category_id'])
             ->whereDoesntHave('bookings', function ($q) use ($start, $end) {
                 $q->where('status', 'confirmed')
                   ->where(function ($query) use ($start, $end) {
@@ -37,65 +39,52 @@ class BookingService
                             ->where('endDate', '>=', $start);
                   });
             })
+            ->lockForUpdate()
             ->limit($count)
             ->get();
-*/
-
-$rooms = Room::where('room_category_id', $data['room_category_id'])
-    ->whereDoesntHave('bookings', function ($q) use ($start, $end) {
-        $q->where('status', 'confirmed')
-          ->where(function ($query) use ($start, $end) {
-              $query->where('startDate', '<=', $end)
-                    ->where('endDate', '>=', $start);
-          });
-    })
-    ->limit($count)
-    ->get();
-
 
         if ($rooms->count() < $count) {
-            return [
+            $result = [
                 'success' => false,
                 'message' => __('messages.not_enough_rooms')
             ];
+            return;
         }
 
         $bookings = [];
 
-        DB::transaction(function () use ($rooms, $customer, $start, $end, &$bookings) {
+        foreach ($rooms as $room) {
 
-            foreach ($rooms as $room) {
+            $booking = Booking::create([
+                'room_id'     => $room->id,
+                'customer_id' => $customer->id,
+                'startDate'   => $start,
+                'endDate'     => $end,
+                'status'      => 'confirmed'
+            ]);
 
-                $booking = Booking::create([
-                    'room_id'     => $room->id,
-                    'customer_id' => $customer->id,
-                    'startDate'   => $start,
-                    'endDate'     => $end,
-                    'status'      => 'confirmed'
+            if ($start <= now()->toDateString() && $end >= now()->toDateString()) {
+                $room->update([
+                    'status' => 'occupied'
                 ]);
-
-                if ($start <= now()->toDateString() && $end >= now()->toDateString()) {
-    $room->update([
-        'status' => 'occupied'
-    ]);
-}
-             //   $room->update(['status' => 'occupied']);
-
-                $bookings[] = [
-                    'book_id'     => $booking->book_id,
-                    'room_id'     => $room->id,
-                    'room_number' => $room->room_number,
-                ];
             }
-        });
 
-        return [
+            $bookings[] = [
+                'book_id'     => $booking->book_id,
+                'room_id'     => $room->id,
+                'room_number' => $room->room_number,
+            ];
+        }
+
+        $result = [
             'success' => true,
             'message' => __('messages.booking_created'),
             'bookings' => $bookings
         ];
-    }
+    });
 
+    return $result;
+}
   
     public function cancel($booking, $customer)
     {
