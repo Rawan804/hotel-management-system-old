@@ -159,6 +159,12 @@ return [
 
 'employee_not_found' =>
     'Employee not found.',
+'reservation_approved_successfully' => 'The reservation has been approved successfully.',
+'reservation_rejected_successfully' => 'The reservation has been rejected successfully.',
 
+'not_authorized_to_update_reservation' => 'You are not authorized to update the reservation status.',
+'cannot_update_canceled_reservation' => 'A canceled reservation cannot be updated.',
+'reservation_already_processed' => 'This reservation has already been processed.',
+'invalid_reservation_status' => 'Invalid reservation status.',
 
 ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\HallReservationRequest;
 use App\Http\Requests\HallRequest;
+use App\Http\Requests\UpdateReservationStatusRequest ;
 use Illuminate\Support\Str;
 use App\Services\HallService ;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,7 @@ class HallController extends Controller
            
         $hall = $this->hallService->createHall($request->all());
 
+
             return response()->json([
                 'message' => __('messages.created_successfully'),
                 'data'    => $this->formatHallResponse($hall)
@@ -36,7 +38,8 @@ class HallController extends Controller
         } catch (Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
-    }
+    
+        }
 
     // 2.تابع تعديل القاعة
      public function update(HallRequest $request, $hall_id): JsonResponse
@@ -62,7 +65,7 @@ class HallController extends Controller
     
     $imageUrl = \Illuminate\Support\Str::startsWith($imagePath, ['http://', 'https://']) 
         ? $imagePath 
-       : url('storage/halls/' . $imagePath);
+        : url('halls/' . $imagePath);
 
     return [
         'hall_id'     => $hall->hall_id,
@@ -165,5 +168,50 @@ class HallController extends Controller
         $stats = $this->hallService->countMonthlyReservationsByHall((int) $hallId);
         return response()->json($stats);
     }
+
+
+  //تغيير حالة حجز القاعة
+public function updateReservationStatus(
+    UpdateReservationStatusRequest $request,
+    int $res_id
+): JsonResponse {
+
+    try {
+   $currentUser = Auth::user();
+
+        $reservation = $this->hallService->updateReservationStatus(
+            $res_id,
+            $request->validated()['status'],
+            $currentUser
+        );
+
+        return response()->json([
+            'success' => true,
+
+            'message' => $reservation->status === 'confirmed'
+                ? __('messages.reservation_approved_successfully')
+                : __('messages.reservation_rejected_successfully'),
+
+            'data' => [
+                'resev_id'    => $reservation->resev_id,
+                'customer_id' => $reservation->customer_id,
+                'hall_id'     => $reservation->hall_id,
+                'start_time'  => $reservation->start_time,
+                'end_time'    => $reservation->end_time,
+                'status'      => $reservation->status,
+            ],
+        ], 200);
+
+    } catch (Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], $e->getCode() >= 400 && $e->getCode() <= 599
+            ? $e->getCode()
+            : 400
+        );
+    }
+}
 }
 

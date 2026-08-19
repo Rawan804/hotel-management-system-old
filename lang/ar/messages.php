@@ -155,5 +155,12 @@ return [
 
 'employee_not_found' =>
     'الموظف غير موجود.',
+    'reservation_approved_successfully' => 'تمت الموافقة على الحجز بنجاح.',
+'reservation_rejected_successfully' => 'تم رفض الحجز بنجاح.',
+
+'not_authorized_to_update_reservation' => 'ليس لديك صلاحية لتعديل حالة الحجز.',
+'cannot_update_canceled_reservation' => 'لا يمكن تعديل حجز تم إلغاؤه.',
+'reservation_already_processed' => 'تمت معالجة هذا الحجز مسبقاً.',
+'invalid_reservation_status' => 'حالة الحجز غير صحيحة.',
    
    ];

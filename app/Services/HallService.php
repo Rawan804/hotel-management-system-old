@@ -161,8 +161,53 @@ public function updateHall(int $hallId, array $data): Hall
             'status' => 'canceled'
         ]);
     }
+//تعديل حالة الحجز 
+public function updateReservationStatus(
+    int $reservationId,
+    string $status,
+    $currentUser
+): Reservation {
 
+if ($currentUser->role !== 'general_manager') {
 
+        throw new Exception(
+            __('messages.not_authorized_to_update_reservation'),
+            403
+        );
+    }
 
+    $reservation = Reservation::findOrFail($reservationId);
+   
+    if ($reservation->status === 'canceled') {
+
+        throw new Exception(
+            __('messages.cannot_update_canceled_reservation'),
+            422
+        );
+    }
+
+    if ($reservation->status !== 'pending') {
+
+        throw new Exception(
+            __('messages.reservation_already_processed'),
+            422
+        );
+    }
+
+    if (!in_array($status, ['confirmed', 'rejected'])) {
+
+        throw new Exception(
+            __('messages.invalid_reservation_status'),
+            422
+        );
+    }
+    $reservation->update([
+        'status' => $status,
+    ]);
+
+    $reservation->refresh();
+
+    return $reservation;
+}
 
 }

@@ -221,12 +221,12 @@ public function saveFirebaseToken(
 }
 
 // إضافة شيفت لموظف
+// إضافة شيفت لموظف
 public function addShift(Request $request)
 {
     $user = Auth::user();
 
 
-    // الصلاحيات
     if (!in_array($user->role, [
         'general_manager',
         'supervisor',
@@ -238,61 +238,118 @@ public function addShift(Request $request)
                 ? 'غير مسموح'
                 : 'Forbidden'
         ], 403);
-
     }
 
+ 
 
-
-    // البيانات المطلوبة
     $request->validate([
-
         'staff_id' => 'required|exists:staff,staff_id',
 
         'days' => 'required|array',
 
         'days.*' => 'required|in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
 
-        'start_time' => 'required',
-
-        'end_time' => 'required',
-
+       'start_time' => 'required|date_format:H:i',
+'end_time' => 'required|date_format:H:i|after:start_time',
     ]);
 
+  
 
-
-    // الموظف
     $staff = Staff::findOrFail(
         $request->staff_id
     );
 
+   
+    if ($user->role === 'general_manager') {
 
+        if (!in_array($staff->role, [
+            'supervisor',
+            'service_manager'
+        ])) {
 
-    // الصلاحيات حسب القسم
-    if (
-        $user->role !== 'general_manager'
-        &&
-        $staff->dep_id != $user->dep_id
-    ) {
+            return response()->json([
+                'message' => app()->getLocale() === 'ar'
+                    ? 'المدير العام يمكنه إضافة الشيفتات للمشرف أو مدير الخدمات فقط'
+                    : 'General Manager can add shifts only to Supervisor or Service Manager'
+            ], 403);
+        }
+    }
 
-        return response()->json([
-            'message' => app()->getLocale() === 'ar'
-                ? 'يمكنك إضافة الشيفتات لموظفي قسمك فقط'
-                : 'You can only add shifts for your department'
-        ],403);
+  
 
+    elseif (in_array($user->role, [
+        'supervisor',
+        'service_manager'
+    ])) {
+
+        if ($staff->role !== 'employee') {
+
+            return response()->json([
+                'message' => app()->getLocale() === 'ar'
+                    ? 'يمكن إضافة الشيفتات للموظفين فقط'
+                    : 'Shifts can only be added to employees'
+            ], 403);
+        }
+
+        if ($staff->dep_id != $user->dep_id) {
+
+            return response()->json([
+                'message' => app()->getLocale() === 'ar'
+                    ? 'يمكنك إضافة الشيفتات لموظفي قسمك فقط'
+                    : 'You can only add shifts to employees in your department'
+            ], 403);
+        }
     }
 
 
+    foreach ($request->days as $day) {
+
+        $conflict = StaffShift::where(
+            'staff_id',
+            $staff->staff_id
+        )
+        ->where(
+            'day_of_week',
+            $day
+        )
+        ->where('is_active', true)
+
+        // الشرط الأساسي لمنع تداخل الأوقات
+        ->where(function ($query) use ($request) {
+
+            $query->where(
+                'start_time',
+                '<',
+                $request->end_time
+            )
+            ->where(
+                'end_time',
+                '>',
+                $request->start_time
+            );
+
+        })
+        ->exists();
+
+        if ($conflict) {
+
+            return response()->json([
+                'success' => false,
+
+                'message' => app()->getLocale() === 'ar'
+                    ? "يوجد تعارض في الشيفت ليوم {$day} لهذا الموظف"
+                    : "There is a shift time conflict on {$day} for this employee"
+            ], 422);
+        }
+    }
+
+  
 
     $shifts = [];
 
-
-    // إنشاء شيفت لكل يوم
     foreach ($request->days as $day) {
 
-
         $shift = StaffShift::create([
-
             'staff_id' => $staff->staff_id,
 
             'day_of_week' => $day,
@@ -302,18 +359,53 @@ public function addShift(Request $request)
             'end_time' => $request->end_time,
 
             'is_active' => true
-
         ]);
 
-
         $shifts[] = $shift;
-
     }
 
+ 
 
+    if ($staff->isWorkingNow()) {
 
+        $onLeave = $staff->leaves()
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->exists();
+
+        if (!$onLeave) {
+
+            $hasActiveTask = $staff->tasks()
+                ->where('status', 'in_progress')
+                ->exists();
+
+          
+            $hasOpenRequest = $staff->serviceRequests()
+                ->whereIn('status', [
+                    'pending',
+                    'in_progress'
+                ])
+                ->exists();
+
+            if ($staff->service_load > $staff->max_load) {
+
+                $staff->status = 'overloaded';
+
+            } elseif ($hasActiveTask || $hasOpenRequest) {
+                $staff->status = 'busy';
+
+            } else {
+
+                $staff->status = 'available';
+            }
+
+            $staff->save();
+        }
+    }
+
+ 
     return response()->json([
-
         'success' => true,
 
         'message' => app()->getLocale() === 'ar'
@@ -323,4 +415,5 @@ public function addShift(Request $request)
         'data' => $shifts
 
     ], 201);
-}}
+}
+}

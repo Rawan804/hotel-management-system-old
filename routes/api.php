@@ -193,7 +193,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/customers/{customerId}/full-details', [CustomerAuthController::class, 'customerFullDetails']);
 Route::get('/customers', [CustomerAuthController::class, 'index']);
-   
+   Route::patch('/halls/reservations/{res_id}/status',
+        [HallController::class, 'updateReservationStatus']
+    );
    });
 //..................................................................................................
 //customer بدون حماية
@@ -277,6 +279,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 
     Route::post('/complaints', [ComplaintController::class, 'store']);
     Route::post('/leaveRequests', [LeaveRequestsController::class, 'store']);
+    
 });
 
 
