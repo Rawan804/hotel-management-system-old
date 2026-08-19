@@ -102,7 +102,7 @@ class HallController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('messages.reserved_success'),
+                'message' => __('messages.Your request is pending, please check your bookings'),
                 'data'    => $reservation
             ], 201);
 

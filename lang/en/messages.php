@@ -166,5 +166,8 @@ return [
 'cannot_update_canceled_reservation' => 'A canceled reservation cannot be updated.',
 'reservation_already_processed' => 'This reservation has already been processed.',
 'invalid_reservation_status' => 'Invalid reservation status.',
+'invalid_leave_dates' => 'The leave start date cannot be after the end date.',
+'leave_date_overlap' => 'You already have a leave request that overlaps with these dates.',
+'Your request is pending, please check your bookings'=>'Your request is pending, please check your bookings' 
 
 ];

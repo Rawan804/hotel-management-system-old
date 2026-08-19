@@ -162,5 +162,8 @@ return [
 'cannot_update_canceled_reservation' => 'لا يمكن تعديل حجز تم إلغاؤه.',
 'reservation_already_processed' => 'تمت معالجة هذا الحجز مسبقاً.',
 'invalid_reservation_status' => 'حالة الحجز غير صحيحة.',
-   
+   'invalid_leave_dates' => 'تاريخ بداية الإجازة لا يمكن أن يكون بعد تاريخ نهايتها.',
+'leave_date_overlap' => 'لديك طلب إجازة آخر يتداخل مع هذه التواريخ.',
+'leave_date_overlap' => 'لديك طلب إجازة آخر يتداخل مع هذه التواريخ.',
+'Your request is pending, please check your bookings'=>'طلبك معلق راجع حجوزاتك'
    ];
