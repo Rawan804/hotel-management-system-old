@@ -15,10 +15,10 @@ Schema::create('fixed_tasks', function (Blueprint $table) {
         ->constrained('departments', 'dep_id')
         ->cascadeOnDelete();
 
-    $table->foreignId('staff_id')
+   /* $table->foreignId('staff_id')
         ->constrained('staff', 'staff_id')
         ->cascadeOnDelete();
-
+*/
     $table->string('name_ar');
     $table->string('name_en');
 

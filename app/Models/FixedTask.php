@@ -10,7 +10,7 @@ class FixedTask extends Model
     use HasFactory;
 
     protected $fillable = [
-        'staff_id',
+       // 'staff_id',
         'dep_id',
         'name_ar',
         'name_en',
@@ -22,10 +22,10 @@ class FixedTask extends Model
 
     protected $appends = ['name'];
 
-    public function staff()
+   /* public function staff()
     {
         return $this->belongsTo(Staff::class, 'staff_id', 'staff_id');
-    }
+    }*/
 
     public function items()
     {

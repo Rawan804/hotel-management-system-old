@@ -12,15 +12,16 @@ use Illuminate\Support\Facades\DB;
 class TaskService
 {
    
-    public function createFromTemplate($templateId)
-    {
-        return DB::transaction(function () use ($templateId) {
-
+public function createFromTemplate($templateId, $staffId)
+{
+    return DB::transaction(function () use ($templateId, $staffId) {
             $template = FixedTask::with('items')->findOrFail($templateId);
 
             // كل Fixed Task مربوط بموظف محدد
-            $staff = Staff::findOrFail($template->staff_id);
-
+$staff = Staff::findOrFail($staffId);
+if ($staff->dep_id != $template->dep_id) {
+    return null;
+}
 
 
 $onLeave = $staff->leaves()
@@ -61,32 +62,170 @@ if (
 
 
 
- public function toggleItem($taskItemId)
+    public function toggleItem($taskItemId)
     {
         return DB::transaction(function () use ($taskItemId) {
 
             $item = TaskItemStatus::findOrFail($taskItemId);
-             $task = Task::findOrFail($item->task_id);
+
+            $task = Task::findOrFail($item->task_id);
 
             $staff = Staff::find($task->staff_id);
-             $item->update(['is_done' => !$item->is_done
+
+          
+
+            $wasDone = $item->is_done;
+
+
+        
+
+            $item->update([
+                'is_done' => !$wasDone
             ]);
-// نحسب الحالة الصحيحة مباشرة من عدد العناصر المنجزة
-            // بدل شروط if/elseif جزئية كانت ناقصة حالة الرجوع لـ pending
-            $totalItems = TaskItemStatus::where('task_id', $task->id)->count();
-            $doneItems = TaskItemStatus::where('task_id', $task->id)
-                ->where('is_done', true)
-                ->count();
-                 $newStatus = match (true) {
-                $doneItems === 0 => 'pending',
-                $doneItems === $totalItems => 'completed',
-                default => 'in_progress',
-            };if ($newStatus !== $task->status) {
-                $task->update(['status' => $newStatus]);
-                 if ($staff) {
-                    $this->refreshStaffStatus($staff);
+
+
+           
+
+            $allDone = TaskItemStatus::where('task_id', $task->id)
+                ->where('is_done', false)
+                ->doesntExist();
+
+
+
+            if (!$allDone) {
+
+           
+
+                if ($task->status === 'pending') {
+
+                    $task->update([
+                        'status' => 'in_progress'
+                    ]);
+
+
+                   /* if ($staff) {
+
+                        // زيادة الحمل مرة واحدة عند بدء المهمة
+                        $staff->increment(
+                            'service_load',
+                            $task->weight ?? 1
+                        );
+
+                        // العامل بدأ العمل
+                        $this->refreshStaffStatus($staff);
+                    }*/
+                        if ($staff) {
+
+    // العامل بدأ العمل
+    $this->refreshStaffStatus($staff);
+
+}
                 }
-            }   return $task->load('fixedTask', 'items');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | إذا كانت المهمة completed وتم إلغاء checkbox
+                | المهمة تعود للعمل
+                |--------------------------------------------------------------------------
+                */
+
+              /*  elseif ($task->status === 'completed') {
+
+                    $task->update([
+                        'status' => 'in_progress'
+                    ]);
+
+
+                    if ($staff) {
+
+                        // إعادة وزن المهمة لأنها عادت قيد التنفيذ
+                        $staff->increment(
+                            'service_load',
+                            $task->weight ?? 1
+                        );
+
+                        $this->refreshStaffStatus($staff);
+                    }
+                }*/
+                    elseif ($task->status === 'completed') {
+
+    $task->update([
+        'status' => 'in_progress'
+    ]);
+
+
+    if ($staff) {
+
+        $this->refreshStaffStatus($staff);
+
+    }
+}
+
+            }
+
+
+
+            else {
+
+                /*
+                |--------------------------------------------------------------------------
+                | إذا كانت المهمة قيد التنفيذ
+                | ننهيها ونزيل وزنها من العامل
+                |--------------------------------------------------------------------------
+                */
+
+               /* if ($task->status === 'in_progress') {
+
+                    $task->update([
+                        'status' => 'completed'
+                    ]);
+
+
+                    if ($staff) {
+
+                        $staff->service_load = max(
+                            0,
+                            $staff->service_load - ($task->weight ?? 1)
+                        );
+
+                        $staff->save();
+
+                        // إعادة حساب حالة العامل
+                        $this->refreshStaffStatus($staff);
+                    }
+                }*/
+                    if ($task->status === 'in_progress') {
+
+    $task->update([
+        'status' => 'completed'
+    ]);
+
+
+    if ($staff) {
+
+        // إعادة حساب حالة العامل فقط
+        $this->refreshStaffStatus($staff);
+
+    }
+}
+
+
+                elseif ($task->status !== 'completed') {
+
+                    $task->update([
+                        'status' => 'completed'
+                    ]);
+                }
+            }
+
+
+           
+
+            return $task->load(
+                'fixedTask',
+                'items'
+            );
         });
     }
 
